@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles de Propiedad - Property Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- ID de la propiedad -->
+    <input type="hidden" id="propertyId" value="{{.Property.ID}}">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <span class="text-xl font-bold text-gray-800">Property Manager</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+            <h1 class="text-2xl font-bold mb-6">Detalles de Propiedad</h1>
+            
+            <div class="grid grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Nombre/Alias</label>
+                    <div class="relative">
+                        <p class="bg-gray-50 p-2 rounded-md cursor-pointer hover:bg-gray-100 transition-colors duration-200" onclick="showEditPropertyModal()">
+                            {{.Property.NombreAlias}}
+                        </p>
+                        <div class="absolute inset-0 rounded-md border-2 border-transparent hover:border-blue-300 transition-all duration-200" onclick="showEditPropertyModal()"></div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Dirección Completa</label>
+                    <div class="relative">
+                        <p class="bg-gray-50 p-2 rounded-md cursor-pointer hover:bg-gray-100 transition-colors duration-200" onclick="showEditPropertyModal()">
+                            {{.Property.DireccionCompleta}}
+                        </p>
+                        <div class="absolute inset-0 rounded-md border-2 border-transparent hover:border-blue-300 transition-all duration-200" onclick="showEditPropertyModal()"></div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Tipo de Propiedad</label>
+                    <div class="relative">
+                        <p class="bg-gray-50 p-2 rounded-md cursor-pointer hover:bg-gray-100 transition-colors duration-200" onclick="showEditPropertyModal()">
+                            {{.Property.TipoPropiedad}}
+                        </p>
+                        <div class="absolute inset-0 rounded-md border-2 border-transparent hover:border-blue-300 transition-all duration-200" onclick="showEditPropertyModal()"></div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Capacidad Máxima</label>
+                    <div class="relative">
+                        <p class="bg-gray-50 p-2 rounded-md cursor-pointer hover:bg-gray-100 transition-colors duration-200" onclick="showEditPropertyModal()">
+                            {{.Property.CapacidadMaxima}}
+                        </p>
+                        <div class="absolute inset-0 rounded-md border-2 border-transparent hover:border-blue-300 transition-all duration-200" onclick="showEditPropertyModal()"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-4">
+                <button onclick="deleteProperty('{{.Property.ID}}')" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Eliminar
+                </button>
+                <a href="/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Property Modal -->
+    <div id="editPropertyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden">
+        <div class="min-h-screen flex items-center justify-center">
+            <div class="bg-white p-8 rounded-lg shadow-lg w-1/2">
+                <h2 class="text-2xl font-bold mb-4">Editar Propiedad</h2>
+                <form id="editPropertyForm" class="space-y-4">
+                    <input type="hidden" name="id" id="propertyId" value="{{.Property.ID}}">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nombre/Alias</label>
+                        <input type="text" name="nombre_alias" id="editNombreAlias" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value="{{.Property.NombreAlias}}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Dirección Completa</label>
+                        <textarea name="direccion_completa" id="editDireccionCompleta" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{.Property.DireccionCompleta}}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tipo de Propiedad</label>
+                        <select name="tipo_propiedad" id="editTipoPropiedad" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Selecciona un tipo...</option>
+                            <option value="Piso" {{if eq .Property.TipoPropiedad "Piso"}}selected{{end}}>Piso</option>
+                            <option value="Apartamento" {{if eq .Property.TipoPropiedad "Apartamento"}}selected{{end}}>Apartamento</option>
+                            <option value="Casa" {{if eq .Property.TipoPropiedad "Casa"}}selected{{end}}>Casa</option>
+                            <option value="Ático" {{if eq .Property.TipoPropiedad "Ático"}}selected{{end}}>Ático</option>
+                            <option value="Duplex" {{if eq .Property.TipoPropiedad "Duplex"}}selected{{end}}>Duplex</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Capacidad Máxima</label>
+                        <input type="number" name="capacidad_maxima" id="editCapacidadMaxima" required min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value="{{.Property.CapacidadMaxima}}">
+                    </div>
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" onclick="hideEditPropertyModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showEditPropertyModal() {
+            // Show modal with current property data
+            document.getElementById('editPropertyModal').classList.remove('hidden');
+        }
+
+        function hideEditPropertyModal() {
+            document.getElementById('editPropertyModal').classList.add('hidden');
+            // Reset form
+            document.getElementById('editPropertyForm').reset();
+        }
+
+        document.getElementById('editPropertyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const response = await fetch(`/api/properties/${formData.get('id')}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    nombre_alias: formData.get('nombre_alias'),
+                    direccion_completa: formData.get('direccion_completa'),
+                    tipo_propiedad: formData.get('tipo_propiedad'),
+                    capacidad_maxima: parseInt(formData.get('capacidad_maxima'))
+                })
+            });
+
+            if (response.ok) {
+                // Refresh the page after successful update
+                location.reload();
+            } else {
+                alert('Error al actualizar la propiedad');
+            }
+        });
+        // Funciones para mostrar/ocultar modales
+        function showEditPropertyModal() {
+            document.getElementById('editPropertyModal').classList.remove('hidden');
+            
+            // Obtener los datos de la propiedad
+            const propertyId = document.getElementById('propertyId').value;
+            console.log('Cargando datos de propiedad con ID:', propertyId);
+            fetch(`/api/properties/${propertyId}`)
+                .then(response => response.json())
+                .then(property => {
+                    document.getElementById('propertyId').value = property.id;
+                    document.getElementById('editNombreAlias').value = property.nombre_alias;
+                    document.getElementById('editDireccionCompleta').value = property.direccion_completa;
+                    document.getElementById('editTipoPropiedad').value = property.tipo_propiedad;
+                    document.getElementById('editCapacidadMaxima').value = property.capacidad_maxima;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function hideEditPropertyModal() {
+            document.getElementById('editPropertyModal').classList.add('hidden');
+        }
+
+        // Función para eliminar propiedad
+        async function deleteProperty(id) {
+            if (confirm('¿Está seguro que desea eliminar esta propiedad?')) {
+                try {
+                    const response = await fetch(`/api/properties/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        window.location.href = '/';
+                    } else {
+                        console.error('Error al eliminar propiedad');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('editPropertyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideEditPropertyModal();
+            }
+        });
+
+        // Manejador de envío del formulario de editar propiedad
+        document.getElementById('editPropertyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const property = {
+                nombre_alias: formData.get('nombre_alias'),
+                direccion_completa: formData.get('direccion_completa'),
+                tipo_propiedad: formData.get('tipo_propiedad'),
+                capacidad_maxima: formData.get('capacidad_maxima')
+            };
+
+            try {
+                const response = await fetch(`/api/properties/${formData.get('id')}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(property)
+                });
+
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    console.error('Error al editar propiedad');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
