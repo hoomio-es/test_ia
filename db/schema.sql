@@ -1,3 +1,21 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_admin BOOLEAN DEFAULT false
+);
+
+CREATE TABLE user_properties (
+    user_id INTEGER REFERENCES users(id),
+    property_id INTEGER REFERENCES properties(id),
+    can_read BOOLEAN DEFAULT true,
+    can_write BOOLEAN DEFAULT false,
+    PRIMARY KEY (user_id, property_id)
+);
+
 CREATE TABLE properties (
     id SERIAL PRIMARY KEY,
     nombre_alias VARCHAR(255) NOT NULL,

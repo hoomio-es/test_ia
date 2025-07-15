@@ -4,7 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Property Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css" rel="stylesheet">
+    <style>
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+        .spinner {
+            width: 70px;
+            text-align: center;
+        }
+        .spinner > div {
+            width: 18px;
+            height: 18px;
+            background-color: #3498db;
+            border-radius: 100%;
+            display: inline-block;
+            -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+            animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+        }
+        .spinner .bounce1 { -webkit-animation-delay: -0.32s; animation-delay: -0.32s; }
+        .spinner .bounce2 { -webkit-animation-delay: -0.16s; animation-delay: -0.16s; }
+        @-webkit-keyframes sk-bouncedelay {
+            0%, 80%, 100% { -webkit-transform: scale(0) }
+            40% { -webkit-transform: scale(1.0) }
+        }
+        @keyframes sk-bouncedelay {
+            0%, 80%, 100% { 
+                -webkit-transform: scale(0);
+                transform: scale(0);
+            } 40% { 
+                -webkit-transform: scale(1.0);
+                transform: scale(1.0);
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <nav class="bg-white shadow-lg">
@@ -25,17 +64,17 @@
             
             <!-- Search Form -->
             <div class="mb-6">
-                <form id="propertySearchForm" class="flex items-center space-x-4">
+                <div class="flex items-center space-x-4">
                     <input type="text" 
                            name="search" 
                            id="searchInput" 
                            placeholder="Buscar en todos los campos..." 
                            class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" 
                            value="{{.Search.Query}}">
-                    <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <button onclick="loadProperties(searchInput.value)" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Buscar
                     </button>
-                </form>
+                </div>
             </div>
 
             <!-- Add Property Button -->
@@ -167,7 +206,20 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
+    <script src="/js/notifications.js"></script>
     <script>
+        // Función para mostrar mensaje de éxito
+        function showSuccessMessage(message) {
+            showSuccess(message);
+        }
+
+        // Función para mostrar mensaje de error
+        function showErrorMessage(message) {
+            showError(message);
+        }
+
         // Debugging
         console.log('Document loaded');
         console.log('Add property button:', document.getElementById('addPropertyBtn'));
@@ -274,58 +326,44 @@
         // Función para cargar propiedades
         async function loadProperties() {
             try {
-                const response = await fetch('/api/search?q=');
+                const response = await fetch('/api/properties');
                 const properties = await response.json();
                 const propertiesTableBody = document.getElementById('propertiesTableBody');
                 propertiesTableBody.innerHTML = '';
 
-                properties.forEach(p => {
+                if (properties.length === 0) {
                     const row = document.createElement('tr');
-                    row.onclick = () => showPropertyDetails(p.id);
-                    row.className = 'cursor-pointer hover:bg-gray-50';
                     row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${p.nombre_alias}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.direccion_completa}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.tipo_propiedad}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.capacidad_maxima}</td>
+                        <td colspan="4" class="px-6 py-4 text-center">
+                            <div class="text-gray-500">No se encontraron propiedades</div>
+                        </td>
                     `;
                     propertiesTableBody.appendChild(row);
-                });
+                } else {
+                    properties.forEach(p => {
+                        const row = document.createElement('tr');
+                        row.onclick = () => showPropertyDetails(p.id);
+                        row.className = 'cursor-pointer hover:bg-gray-50';
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">${p.nombre_alias}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${p.direccion_completa}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${p.tipo_propiedad}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${p.capacidad_maxima}</td>
+                        `;
+                        propertiesTableBody.appendChild(row);
+                    });
+                }
             } catch (error) {
                 console.error('Error al cargar propiedades:', error);
-            }
-        }
-
-        // Función para manejar la búsqueda en tiempo real
-        let searchTimeout;
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            clearTimeout(searchTimeout);
-            const searchTerm = e.target.value;
-            searchTimeout = setTimeout(() => loadProperties(searchTerm), 300);
-        });
-
-        // Función para cargar propiedades
-        async function loadProperties(searchTerm = '') {
-            try {
-                const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
-                const properties = await response.json();
                 const propertiesTableBody = document.getElementById('propertiesTableBody');
                 propertiesTableBody.innerHTML = '';
-
-                properties.forEach(p => {
-                    const row = document.createElement('tr');
-                    row.onclick = () => showPropertyDetails(p.id);
-                    row.className = 'cursor-pointer hover:bg-gray-50';
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${p.nombre_alias}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.direccion_completa}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.tipo_propiedad}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.capacidad_maxima}</td>
-                    `;
-                    propertiesTableBody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error al cargar propiedades:', error);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="4" class="px-6 py-4 text-center">
+                        <div class="text-red-500">Error al cargar las propiedades</div>
+                    </td>
+                `;
+                propertiesTableBody.appendChild(row);
             }
         }
 
@@ -341,14 +379,14 @@
 
             // Validar campos
             if (!nombreAlias || !direccionCompleta || !tipoPropiedad || !capacidadMaxima) {
-                alert('Por favor, complete todos los campos');
+                console.error('Formulario incompleto');
                 return;
             }
 
             // Validar que la capacidad máxima sea un número
             const capInt = parseInt(capacidadMaxima);
             if (isNaN(capInt) || capInt <= 0) {
-                alert('La capacidad máxima debe ser un número mayor que 0');
+                console.error('Capacidad máxima inválida');
                 return;
             }
 
@@ -372,8 +410,6 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    // Mostrar mensaje de éxito
-                    alert('Propiedad agregada exitosamente');
                     // Limpiar el formulario
                     this.reset();
                     // Actualizar la lista de propiedades
@@ -381,12 +417,10 @@
                     // Cerrar el modal
                     hideAddPropertyModal();
                 } else {
-                    // Mostrar mensaje de error
-                    alert(result.error || 'Error al agregar la propiedad');
+                    console.error('Error del servidor:', result.error);
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Error al comunicarse con el servidor');
+                console.error('Error de red:', error);
             }
         };
 
@@ -444,7 +478,10 @@
         }
 
         // Cargar propiedades al cargar la página
-        window.onload = loadProperties;
+        window.onload = async () => {
+            console.log('Cargando propiedades inicialmente...');
+            await loadProperties();
+        };
     </script>
 </body>
 </html>
