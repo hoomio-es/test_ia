@@ -144,6 +144,7 @@
     <script>
         let searchTags = [];
         let addAmenityTags = [];
+        let allAmenitiesSet = new Set();
         let currentStep = 1;
 
         const steps = document.querySelectorAll('.form-step');
@@ -180,7 +181,7 @@
         
         function showPropertyDetails(id) { window.location.href = `/property/${id}`; }
 
-        function renderTags(tags, containerId, hiddenInputId) {
+        function renderTags(tags, containerId, hiddenInputId, onUpdateCallback) {
             const container = document.getElementById(containerId);
             const hiddenInput = document.getElementById(hiddenInputId);
             container.innerHTML = '';
@@ -193,14 +194,8 @@
                 removeButton.className = 'ml-2 text-gray-500 hover:text-gray-700';
                 removeButton.innerHTML = '&times;';
                 removeButton.addEventListener('click', () => {
-                    if (containerId === 'tagsContainer') {
-                        searchTags.splice(index, 1);
-                        renderTags(searchTags, 'tagsContainer', null);
-                        loadProperties();
-                    } else {
-                        addAmenityTags.splice(index, 1);
-                        renderTags(addAmenityTags, 'addAmenitiesTagContainer', 'addAmenidadesHidden');
-                    }
+                    tags.splice(index, 1);
+                    onUpdateCallback();
                 });
                 tagElement.appendChild(textNode);
                 tagElement.appendChild(removeButton);
@@ -211,8 +206,20 @@
             }
         }
 
-        function renderSearchTags() { renderTags(searchTags, 'tagsContainer', null); }
-        function renderAddAmenityTags() { renderTags(addAmenityTags, 'addAmenitiesTagContainer', 'addAmenidadesHidden'); }
+        function renderSearchTags() { renderTags(searchTags, 'tagsContainer', null, () => { renderSearchTags(); loadProperties(); }); }
+        function renderAddAmenityTags() { renderTags(addAmenityTags, 'addAmenitiesTagContainer', 'addAmenidadesHidden', renderAddAmenityTags); updateAmenityDatalist(); }
+        
+        function updateAmenityDatalist() {
+            const datalist = document.getElementById('amenities-datalist');
+            datalist.innerHTML = '';
+            allAmenitiesSet.forEach(amenity => {
+                if (!addAmenityTags.includes(amenity)) {
+                    const option = document.createElement('option');
+                    option.value = amenity;
+                    datalist.appendChild(option);
+                }
+            });
+        }
 
         async function loadProperties() {
             const params = new URLSearchParams();
@@ -294,8 +301,8 @@
                         const stepNumber = parseInt(stepPane.id.split('-')[2]);
                         showStep(stepNumber);
                         input.focus();
-                        input.classList.add('border-red-500');
-                        setTimeout(() => input.classList.remove('border-red-500'), 3000);
+                        input.classList.add('border-red-500', 'ring-red-500', 'ring-1');
+                        setTimeout(() => input.classList.remove('border-red-500', 'ring-red-500', 'ring-1'), 3000);
                         alert(`El campo "${input.previousElementSibling.textContent}" es obligatorio.`);
                         return false;
                     }
@@ -370,28 +377,21 @@
 
         async function fetchAllAmenities() {
             try {
-                // CORRECTED: Use a valid relative URL for the fetch call
                 const response = await fetch('/api/search');
                 if (!response.ok) return;
                 const properties = await response.json();
-                const allAmenities = new Set();
+                allAmenitiesSet = new Set();
                 if (properties) {
                     properties.forEach(p => {
                         if (p.amenidades && p.amenidades.Valid) {
                             p.amenidades.String.split(',').forEach(amenity => {
                                 const trimmed = amenity.trim();
-                                if(trimmed) allAmenities.add(trimmed);
+                                if(trimmed) allAmenitiesSet.add(trimmed);
                             });
                         }
                     });
                 }
-                const datalist = document.getElementById('amenities-datalist');
-                datalist.innerHTML = '';
-                allAmenities.forEach(amenity => {
-                    const option = document.createElement('option');
-                    option.value = amenity;
-                    datalist.appendChild(option);
-                });
+                updateAmenityDatalist();
             } catch (error) {
                 console.error("Could not fetch amenities for suggestions:", error);
             }
