@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// Property model reflects the full schema
 type Property struct {
 	ID                            int             `json:"id"`
 	NombreAlias                   string          `json:"nombre_alias"`
@@ -26,7 +25,7 @@ type Property struct {
 	UrlAirbnb                     sql.NullString  `json:"url_airbnb"`
 	CodigoBooking                 sql.NullString  `json:"codigo_booking"`
 	UrlBooking                    sql.NullString  `json:"url_booking"`
-	PrecioBaseNoches              float64         `json:"precio_base_noches"`
+	PrecioBaseNoches              sql.NullFloat64 `json:"precio_base_noches"`
 	IbiAnual                      sql.NullFloat64 `json:"ibi_anual"`
 	GastosComunidad               sql.NullFloat64 `json:"gastos_comunidad"`
 	HipotecaMensual               sql.NullFloat64 `json:"hipoteca_mensual"`
@@ -69,22 +68,18 @@ type Property struct {
 	UpdatedAt                     time.Time       `json:"updated_at"`
 }
 
-// PropertyService provides methods for property operations
 type PropertyService struct {
 	db *sql.DB
 }
 
-// NewPropertyService creates a new property service
 func NewPropertyService(db *sql.DB) *PropertyService {
 	return &PropertyService{db: db}
 }
 
-// rowScanner defines an interface that can be satisfied by *sql.Row and *sql.Rows.
 type rowScanner interface {
 	Scan(dest ...interface{}) error
 }
 
-// scanProperty is a helper function to scan a row into the Property struct.
 func scanProperty(row rowScanner, p *Property) error {
 	return row.Scan(
 		&p.ID, &p.NombreAlias, &p.CedulaHabitabilidad, &p.LicenciaTuristica, &p.DireccionCompleta,
@@ -104,14 +99,12 @@ func scanProperty(row rowScanner, p *Property) error {
 	)
 }
 
-// GetAllProperties retrieves all properties from the database
 func (s *PropertyService) GetAllProperties() ([]Property, error) {
 	rows, err := s.db.Query("SELECT * FROM properties ORDER BY id ASC")
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving properties: %w", err)
 	}
 	defer rows.Close()
-
 	var properties []Property
 	for rows.Next() {
 		var p Property
@@ -120,25 +113,21 @@ func (s *PropertyService) GetAllProperties() ([]Property, error) {
 		}
 		properties = append(properties, p)
 	}
-
 	return properties, nil
 }
 
-// GetPropertyByID retrieves a property by its ID
 func (s *PropertyService) GetPropertyByID(id int) (*Property, error) {
 	var p Property
 	row := s.db.QueryRow("SELECT * FROM properties WHERE id = $1", id)
 	if err := scanProperty(row, &p); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // Not found is not an application error
+			return nil, nil
 		}
-		return nil, fmt.Errorf("error retrieving property: %w", err)
+		return nil, fmt.Errorf("error retrieving property by id: %w", err)
 	}
-
 	return &p, nil
 }
 
-// SearchProperties searches for properties matching ALL of the query terms
 func (s *PropertyService) SearchProperties(queries []string) ([]Property, error) {
 	if len(queries) == 0 {
 		return s.GetAllProperties()
@@ -152,11 +141,8 @@ func (s *PropertyService) SearchProperties(queries []string) ([]Property, error)
 		if q == "" {
 			continue
 		}
-		// Each query term must match one of the fields (OR group for each term)
 		conditions = append(conditions, fmt.Sprintf("(nombre_alias ILIKE $%d OR direccion_completa ILIKE $%d OR tipo_propiedad ILIKE $%d)", paramIndex, paramIndex, paramIndex))
-
-		searchTerm := "%" + q + "%"
-		args = append(args, searchTerm)
+		args = append(args, "%"+q+"%")
 		paramIndex++
 	}
 
@@ -164,7 +150,6 @@ func (s *PropertyService) SearchProperties(queries []string) ([]Property, error)
 		return s.GetAllProperties()
 	}
 
-	// All term groups are joined by AND
 	query := "SELECT * FROM properties WHERE " + strings.Join(conditions, " AND ") + " ORDER BY id ASC"
 
 	rows, err := s.db.Query(query, args...)
@@ -181,12 +166,9 @@ func (s *PropertyService) SearchProperties(queries []string) ([]Property, error)
 		}
 		properties = append(properties, p)
 	}
-
 	return properties, nil
 }
 
-// toSQLValues converts a Property struct to a slice of interfaces for DB operations.
-// It omits ID, CreatedAt, and UpdatedAt for inserts.
 func toSQLValues(p *Property) []interface{} {
 	return []interface{}{
 		p.NombreAlias, p.CedulaHabitabilidad, p.LicenciaTuristica, p.DireccionCompleta, p.TipoPropiedad,
@@ -206,10 +188,7 @@ func toSQLValues(p *Property) []interface{} {
 	}
 }
 
-// CreateProperty creates a new property
 func (s *PropertyService) CreateProperty(p *Property) error {
-	log.Printf("[PropertyService] Starting property creation with data: %+v", p)
-
 	query := `
         INSERT INTO properties (
             nombre_alias, cedula_habitabilidad, licencia_turistica, direccion_completa, tipo_propiedad,
@@ -232,19 +211,14 @@ func (s *PropertyService) CreateProperty(p *Property) error {
             $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54
         )
     `
-	log.Printf("[PropertyService] Executing query: %s", query)
-
 	_, err := s.db.Exec(query, toSQLValues(p)...)
 	if err != nil {
-		log.Printf("[PropertyService] Error executing query: %v", err)
+		log.Printf("Error executing create query: %v", err)
 		return fmt.Errorf("error creating property: %w", err)
 	}
-
-	log.Printf("[PropertyService] Property created successfully")
 	return nil
 }
 
-// UpdateProperty updates an existing property
 func (s *PropertyService) UpdateProperty(id int, p *Property) error {
 	query := `
         UPDATE properties SET
@@ -269,16 +243,13 @@ func (s *PropertyService) UpdateProperty(id int, p *Property) error {
         WHERE id = $55
     `
 	args := append(toSQLValues(p), id)
-
 	_, err := s.db.Exec(query, args...)
 	if err != nil {
 		return fmt.Errorf("error updating property: %w", err)
 	}
-
 	return nil
 }
 
-// DeleteProperty deletes a property by its ID
 func (s *PropertyService) DeleteProperty(id int) error {
 	_, err := s.db.Exec("DELETE FROM properties WHERE id = $1", id)
 	if err != nil {
@@ -287,7 +258,6 @@ func (s *PropertyService) DeleteProperty(id int) error {
 	return nil
 }
 
-// ValidateProperty checks if the property data is valid
 func ValidateProperty(p *Property) error {
 	if p.NombreAlias == "" {
 		return fmt.Errorf("nombre_alias is required")
@@ -301,6 +271,5 @@ func ValidateProperty(p *Property) error {
 	if p.CapacidadMaxima <= 0 {
 		return fmt.Errorf("capacidad_maxima must be greater than 0")
 	}
-	// Add any other validation rules you need here
 	return nil
 }

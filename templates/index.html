@@ -21,24 +21,20 @@
 
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-            <h1 class="text-2xl font-bold mb-6">Gestión de Propiedades</h1>
+            <h1 class="text-2xl font-bold mb-4">Gestión de Propiedades</h1>
             
-            <!-- NUEVO: Contenedor para las etiquetas de búsqueda -->
-            <div id="tagsContainer" class="flex flex-wrap gap-2 mb-4"></div>
-
-            <!-- Search Form -->
-            <div class="mb-6">
-                <form id="propertySearchForm" class="flex items-center space-x-4">
+            <!-- Search Form with Tags Inside -->
+            <form id="propertySearchForm" class="mb-6">
+                <div class="flex flex-wrap items-center gap-2 p-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition">
+                    <div id="tagsContainer" class="flex flex-wrap gap-2">
+                        <!-- Las etiquetas de búsqueda se renderizarán aquí -->
+                    </div>
                     <input type="text" 
-                           name="search" 
                            id="searchInput" 
-                           placeholder="Añadir término de búsqueda y pulsar Enter..." 
-                           class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                    <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Añadir
-                    </button>
-                </form>
-            </div>
+                           placeholder="Añadir término y pulsar Enter..." 
+                           class="flex-1 min-w-[150px] border-none outline-none bg-transparent p-1">
+                </div>
+            </form>
 
             <!-- Add Property Button -->
             <button 
@@ -116,7 +112,6 @@
     <script>
         let searchTags = [];
 
-        // Funciones para mostrar/ocultar modales
         function showAddPropertyModal() {
             document.getElementById('addPropertyModal').classList.remove('hidden');
         }
@@ -130,7 +125,6 @@
             window.location.href = `/property/${id}`;
         }
 
-        // Función para renderizar las etiquetas de búsqueda
         function renderTags() {
             const tagsContainer = document.getElementById('tagsContainer');
             tagsContainer.innerHTML = '';
@@ -153,19 +147,19 @@
             loadProperties();
         }
 
-        // Función para cargar propiedades basada en las etiquetas
         async function loadProperties() {
-            const searchTerm = searchTags.join(' ');
+            const params = new URLSearchParams();
+            searchTags.forEach(tag => params.append('q', tag));
+            const queryString = params.toString();
+
             try {
-                const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                const response = await fetch(`/api/search?${queryString}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const properties = await response.json();
                 const propertiesTableBody = document.getElementById('propertiesTableBody');
-                propertiesTableBody.innerHTML = ''; // Limpiar la tabla
+                propertiesTableBody.innerHTML = '';
 
-                if (properties.length === 0) {
+                if (!properties || properties.length === 0) {
                     propertiesTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">No se encontraron propiedades.</td></tr>';
                     return;
                 }
@@ -184,12 +178,10 @@
                 });
             } catch (error) {
                 console.error('Error al cargar propiedades:', error);
-                const propertiesTableBody = document.getElementById('propertiesTableBody');
-                propertiesTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">Error al cargar las propiedades.</td></tr>';
+                document.getElementById('propertiesTableBody').innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">Error al cargar las propiedades.</td></tr>';
             }
         }
 
-        // Manejar el formulario para añadir etiquetas
         document.getElementById('propertySearchForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const searchInput = document.getElementById('searchInput');
@@ -200,10 +192,9 @@
                 renderTags();
                 loadProperties();
             }
-            searchInput.value = ''; // Limpiar input
+            searchInput.value = '';
         });
 
-        // Limpiar búsqueda y etiquetas con la tecla Escape
         document.getElementById('searchInput').addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 this.value = '';
@@ -213,7 +204,6 @@
             }
         });
 
-        // Manejador de envío del formulario de agregar propiedad
         document.getElementById('addPropertyForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -222,15 +212,14 @@
                 nombre_alias: formData.get('nombre_alias'),
                 direccion_completa: formData.get('direccion_completa'),
                 tipo_propiedad: formData.get('tipo_propiedad'),
-                capacidad_maxima: parseInt(formData.get('capacidad_maxima'), 10)
+                capacidad_maxima: parseInt(formData.get('capacidad_maxima'), 10) || 0,
+                precio_base_noches: parseFloat(formData.get('precio_base_noches')) || 0.0
             };
 
             try {
                 const response = await fetch('/api/properties', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(property)
                 });
 
@@ -247,8 +236,7 @@
                 alert('Error al comunicarse con el servidor');
             }
         });
-
-        // Cerrar modal al hacer clic fuera
+        
         document.getElementById('addPropertyModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 hideAddPropertyModal();
