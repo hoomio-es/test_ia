@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Property model reflects the full schema
 type Property struct {
 	ID                            int             `json:"id"`
 	NombreAlias                   string          `json:"nombre_alias"`
@@ -68,18 +69,22 @@ type Property struct {
 	UpdatedAt                     time.Time       `json:"updated_at"`
 }
 
+// PropertyService provides methods for property operations
 type PropertyService struct {
 	db *sql.DB
 }
 
+// NewPropertyService creates a new property service
 func NewPropertyService(db *sql.DB) *PropertyService {
 	return &PropertyService{db: db}
 }
 
+// rowScanner defines an interface that can be satisfied by *sql.Row and *sql.Rows.
 type rowScanner interface {
 	Scan(dest ...interface{}) error
 }
 
+// scanProperty is a helper function to scan a row into the Property struct.
 func scanProperty(row rowScanner, p *Property) error {
 	return row.Scan(
 		&p.ID, &p.NombreAlias, &p.CedulaHabitabilidad, &p.LicenciaTuristica, &p.DireccionCompleta,
@@ -99,12 +104,14 @@ func scanProperty(row rowScanner, p *Property) error {
 	)
 }
 
+// GetAllProperties retrieves all properties from the database
 func (s *PropertyService) GetAllProperties() ([]Property, error) {
 	rows, err := s.db.Query("SELECT * FROM properties ORDER BY id ASC")
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving properties: %w", err)
 	}
 	defer rows.Close()
+
 	var properties []Property
 	for rows.Next() {
 		var p Property
@@ -113,21 +120,25 @@ func (s *PropertyService) GetAllProperties() ([]Property, error) {
 		}
 		properties = append(properties, p)
 	}
+
 	return properties, nil
 }
 
+// GetPropertyByID retrieves a property by its ID
 func (s *PropertyService) GetPropertyByID(id int) (*Property, error) {
 	var p Property
 	row := s.db.QueryRow("SELECT * FROM properties WHERE id = $1", id)
 	if err := scanProperty(row, &p); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, nil // Not found is not an application error
 		}
-		return nil, fmt.Errorf("error retrieving property by id: %w", err)
+		return nil, fmt.Errorf("error retrieving property: %w", err)
 	}
+
 	return &p, nil
 }
 
+// SearchProperties searches for properties matching ALL of the query terms across multiple fields.
 func (s *PropertyService) SearchProperties(queries []string) ([]Property, error) {
 	if len(queries) == 0 {
 		return s.GetAllProperties()
@@ -137,11 +148,30 @@ func (s *PropertyService) SearchProperties(queries []string) ([]Property, error)
 	var args []interface{}
 	paramIndex := 1
 
+	// Lista de todos los campos de texto en los que se quiere buscar.
+	searchFields := []string{
+		"nombre_alias", "direccion_completa", "tipo_propiedad",
+		"cedula_habitabilidad", "licencia_turistica", "descripcion_corta",
+		"amenidades", "codigo_airbnb", "codigo_booking",
+		"contacto_propietario_nombre", "contacto_propietario_email",
+		"limpiador_nombre", "fontanero_nombre", "seguro_hogar_aseguradora",
+		"seguro_hogar_poliza", "seguro_rc_aseguradora", "seguro_rc_poliza",
+		"notas_adicionales",
+	}
+
 	for _, q := range queries {
 		if q == "" {
 			continue
 		}
-		conditions = append(conditions, fmt.Sprintf("(nombre_alias ILIKE $%d OR direccion_completa ILIKE $%d OR tipo_propiedad ILIKE $%d)", paramIndex, paramIndex, paramIndex))
+
+		// Para cada término de búsqueda, crea un grupo de condiciones OR.
+		var orConditions []string
+		for _, field := range searchFields {
+			orConditions = append(orConditions, fmt.Sprintf("%s ILIKE $%d", field, paramIndex))
+		}
+		conditions = append(conditions, "("+strings.Join(orConditions, " OR ")+")")
+
+		// Añade el término de búsqueda a los argumentos de la consulta.
 		args = append(args, "%"+q+"%")
 		paramIndex++
 	}
@@ -150,6 +180,7 @@ func (s *PropertyService) SearchProperties(queries []string) ([]Property, error)
 		return s.GetAllProperties()
 	}
 
+	// Une todos los grupos de condiciones con AND para una búsqueda estricta.
 	query := "SELECT * FROM properties WHERE " + strings.Join(conditions, " AND ") + " ORDER BY id ASC"
 
 	rows, err := s.db.Query(query, args...)
@@ -169,6 +200,7 @@ func (s *PropertyService) SearchProperties(queries []string) ([]Property, error)
 	return properties, nil
 }
 
+// toSQLValues converts a Property struct to a slice of interfaces for DB operations.
 func toSQLValues(p *Property) []interface{} {
 	return []interface{}{
 		p.NombreAlias, p.CedulaHabitabilidad, p.LicenciaTuristica, p.DireccionCompleta, p.TipoPropiedad,
@@ -188,6 +220,7 @@ func toSQLValues(p *Property) []interface{} {
 	}
 }
 
+// CreateProperty creates a new property
 func (s *PropertyService) CreateProperty(p *Property) error {
 	query := `
         INSERT INTO properties (
@@ -219,6 +252,7 @@ func (s *PropertyService) CreateProperty(p *Property) error {
 	return nil
 }
 
+// UpdateProperty updates an existing property
 func (s *PropertyService) UpdateProperty(id int, p *Property) error {
 	query := `
         UPDATE properties SET
@@ -250,6 +284,7 @@ func (s *PropertyService) UpdateProperty(id int, p *Property) error {
 	return nil
 }
 
+// DeleteProperty deletes a property by its ID
 func (s *PropertyService) DeleteProperty(id int) error {
 	_, err := s.db.Exec("DELETE FROM properties WHERE id = $1", id)
 	if err != nil {
@@ -258,6 +293,7 @@ func (s *PropertyService) DeleteProperty(id int) error {
 	return nil
 }
 
+// ValidateProperty checks if the property data is valid
 func ValidateProperty(p *Property) error {
 	if p.NombreAlias == "" {
 		return fmt.Errorf("nombre_alias is required")
