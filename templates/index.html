@@ -125,18 +125,26 @@
             window.location.href = `/property/${id}`;
         }
 
+        // CORREGIDO: Se usa addEventListener para crear las etiquetas de forma más robusta
         function renderTags() {
             const tagsContainer = document.getElementById('tagsContainer');
-            tagsContainer.innerHTML = '';
+            tagsContainer.innerHTML = ''; // Limpiar contenedor
             searchTags.forEach((tag, index) => {
                 const tagElement = document.createElement('span');
                 tagElement.className = 'inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-medium rounded-full';
-                tagElement.innerHTML = `
-                    ${tag}
-                    <button onclick="removeTag(${index})" class="ml-2 text-indigo-500 hover:text-indigo-700 focus:outline-none">
-                        &times;
-                    </button>
-                `;
+                
+                const textNode = document.createTextNode(tag + ' ');
+                
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button'; // Evita que el botón envíe el formulario
+                removeButton.className = 'ml-2 text-indigo-500 hover:text-indigo-700 focus:outline-none';
+                removeButton.innerHTML = '&times;';
+                removeButton.addEventListener('click', () => {
+                    removeTag(index);
+                });
+
+                tagElement.appendChild(textNode);
+                tagElement.appendChild(removeButton);
                 tagsContainer.appendChild(tagElement);
             });
         }
