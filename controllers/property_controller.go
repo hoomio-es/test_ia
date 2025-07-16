@@ -6,25 +6,30 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/template/html/v2"
-	"github.com/jgargallo/property-manager/models"
+	"github.com/jgargallo/property-manager/models" // Asegúrate que la ruta del módulo sea correcta
 )
 
 // PropertyController handles property-related routes
 type PropertyController struct {
 	propertyService *models.PropertyService
-	engine          *html.Engine
 }
 
 // NewPropertyController creates a new property controller
-func NewPropertyController(propertyService *models.PropertyService, engine *html.Engine) *PropertyController {
+func NewPropertyController(propertyService *models.PropertyService) *PropertyController {
 	return &PropertyController{
 		propertyService: propertyService,
-		engine:         engine,
 	}
 }
 
-// Index renders the main properties page
+// getPropertyID is a helper to extract and convert the ID from the request parameters.
+func getPropertyID(ctx *fiber.Ctx) (int, error) {
+	id, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
 // ListProperties renders the properties list page
 func (c *PropertyController) ListProperties(ctx *fiber.Ctx) error {
 	properties, err := c.propertyService.GetAllProperties()
@@ -39,7 +44,7 @@ func (c *PropertyController) ListProperties(ctx *fiber.Ctx) error {
 
 // ShowProperty renders the property details page
 func (c *PropertyController) ShowProperty(ctx *fiber.Ctx) error {
-	id, err := strconv.Atoi(ctx.Params("id"))
+	id, err := getPropertyID(ctx)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).SendString("Invalid ID")
 	}
@@ -60,8 +65,14 @@ func (c *PropertyController) ShowProperty(ctx *fiber.Ctx) error {
 
 // SearchProperties handles property search requests
 func (c *PropertyController) SearchProperties(ctx *fiber.Ctx) error {
-	query := ctx.Query("q")
-	properties, err := c.propertyService.SearchProperties(query)
+	// CORRECTED: The method is not .Queries, we need to use PeekMulti from the underlying context.
+	qBytes := ctx.Context().QueryArgs().PeekMulti("q")
+	queries := make([]string, len(qBytes))
+	for i, b := range qBytes {
+		queries[i] = string(b)
+	}
+
+	properties, err := c.propertyService.SearchProperties(queries)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).SendString(err.Error())
 	}
@@ -69,9 +80,9 @@ func (c *PropertyController) SearchProperties(ctx *fiber.Ctx) error {
 	return ctx.JSON(properties)
 }
 
-// GetProperty retrieves a single property
+// GetProperty retrieves a single property as JSON
 func (c *PropertyController) GetProperty(ctx *fiber.Ctx) error {
-	id, err := strconv.Atoi(ctx.Params("id"))
+	id, err := getPropertyID(ctx)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
 	}
@@ -91,91 +102,45 @@ func (c *PropertyController) GetProperty(ctx *fiber.Ctx) error {
 // CreateProperty creates a new property
 func (c *PropertyController) CreateProperty(ctx *fiber.Ctx) error {
 	log.Printf("[CreateProperty] Received request")
-	
-	// Parse JSON body
+
 	var property models.Property
 	if err := ctx.BodyParser(&property); err != nil {
 		log.Printf("[CreateProperty] Error parsing property data: %v", err)
-		log.Printf("[CreateProperty] Raw body: %s", string(ctx.Body()))
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid property data",
+			"error":   "Invalid property data",
 			"details": err.Error(),
 		})
 	}
 
 	log.Printf("[CreateProperty] Parsed property data: %+v", property)
 
-	// Validar campos requeridos
-	if property.NombreAlias == "" {
-		log.Printf("[CreateProperty] Validation error: nombre_alias is empty")
+	// Use the centralized validation function from the model
+	if err := models.ValidateProperty(&property); err != nil {
+		log.Printf("[CreateProperty] Validation error: %v", err)
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid property data",
-			"details": "nombre_alias is required",
+			"error":   "Invalid property data",
+			"details": err.Error(),
 		})
 	}
 
-	if property.DireccionCompleta == "" {
-		log.Printf("[CreateProperty] Validation error: direccion_completa is empty")
-		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid property data",
-			"details": "direccion_completa is required",
-		})
-	}
-
-	if property.TipoPropiedad == "" {
-		log.Printf("[CreateProperty] Validation error: tipo_propiedad is empty")
-		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid property data",
-			"details": "tipo_propiedad is required",
-		})
-	}
-
-	if property.CapacidadMaxima == "" {
-		log.Printf("[CreateProperty] Validation error: capacidad_maxima is empty")
-		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid property data",
-			"details": "capacidad_maxima is required",
-		})
-	}
-
-	// Convertir capacidad_maxima a int para validación
-	capInt, err := strconv.Atoi(property.CapacidadMaxima)
-	if err != nil {
-		log.Printf("[CreateProperty] Error converting capacidad_maxima: %v", err)
-		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid property data",
-			"details": "capacidad_maxima must be a valid number",
-		})
-	}
-
-	if capInt <= 0 {
-		log.Printf("[CreateProperty] Validation error: capacidad_maxima must be greater than 0")
-		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid property data",
-			"details": "capacidad_maxima must be greater than 0",
-		})
-	}
-
-	// La capacidad_maxima ya está en formato string, no necesitamos convertirla de vuelta
-	log.Printf("[CreateProperty] Starting property creation in service")
 	if err := c.propertyService.CreateProperty(&property); err != nil {
 		log.Printf("[CreateProperty] Error creating property: %v", err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create property",
+			"error":   "Failed to create property",
 			"details": err.Error(),
 		})
 	}
 
 	log.Printf("[CreateProperty] Property created successfully: %+v", property)
-	return ctx.JSON(fiber.Map{
-		"message": "Property created successfully",
+	return ctx.Status(http.StatusCreated).JSON(fiber.Map{
+		"message":  "Property created successfully",
 		"property": property,
 	})
 }
 
 // UpdateProperty updates an existing property
 func (c *PropertyController) UpdateProperty(ctx *fiber.Ctx) error {
-	id, err := strconv.Atoi(ctx.Params("id"))
+	id, err := getPropertyID(ctx)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
 	}
@@ -183,6 +148,14 @@ func (c *PropertyController) UpdateProperty(ctx *fiber.Ctx) error {
 	var property models.Property
 	if err := ctx.BodyParser(&property); err != nil {
 		return ctx.Status(http.StatusBadRequest).SendString(err.Error())
+	}
+
+	// Use the centralized validation function from the model
+	if err := models.ValidateProperty(&property); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Invalid property data",
+			"details": err.Error(),
+		})
 	}
 
 	if err := c.propertyService.UpdateProperty(id, &property); err != nil {
@@ -194,7 +167,7 @@ func (c *PropertyController) UpdateProperty(ctx *fiber.Ctx) error {
 
 // DeleteProperty deletes a property
 func (c *PropertyController) DeleteProperty(ctx *fiber.Ctx) error {
-	id, err := strconv.Atoi(ctx.Params("id"))
+	id, err := getPropertyID(ctx)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
 	}
@@ -202,7 +175,7 @@ func (c *PropertyController) DeleteProperty(ctx *fiber.Ctx) error {
 	if err := c.propertyService.DeleteProperty(id); err != nil {
 		log.Printf("Error deleting property: %v", err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete property",
+			"error":   "Failed to delete property",
 			"details": err.Error(),
 		})
 	}

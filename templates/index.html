@@ -23,17 +23,19 @@
         <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
             <h1 class="text-2xl font-bold mb-6">Gestión de Propiedades</h1>
             
+            <!-- NUEVO: Contenedor para las etiquetas de búsqueda -->
+            <div id="tagsContainer" class="flex flex-wrap gap-2 mb-4"></div>
+
             <!-- Search Form -->
             <div class="mb-6">
                 <form id="propertySearchForm" class="flex items-center space-x-4">
                     <input type="text" 
                            name="search" 
                            id="searchInput" 
-                           placeholder="Buscar en todos los campos..." 
-                           class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" 
-                           value="{{.Search.Query}}">
+                           placeholder="Añadir término de búsqueda y pulsar Enter..." 
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                     <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Buscar
+                        Añadir
                     </button>
                 </form>
             </div>
@@ -56,17 +58,24 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacidad</th>
-    
                         </tr>
                     </thead>
                     <tbody id="propertiesTableBody" class="bg-white divide-y divide-gray-200">
+                        {{range .Properties}}
+                        <tr onclick="showPropertyDetails({{.ID}})" class="cursor-pointer hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">{{.NombreAlias}}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{.DireccionCompleta}}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{.TipoPropiedad}}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{.CapacidadMaxima}}</td>
+                        </tr>
+                        {{end}}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Add Property Modal -->
+    <!-- Add Property Modal (sin cambios) -->
     <div id="addPropertyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden">
         <div class="min-h-screen flex items-center justify-center">
             <div class="bg-white p-8 rounded-lg shadow-lg w-1/2">
@@ -93,7 +102,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Capacidad Máxima</label>
-                        <input type="text" name="capacidad_maxima" required pattern="\d+" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input type="number" name="capacidad_maxima" required min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                     <div class="flex justify-end space-x-4">
                         <button type="button" onclick="hideAddPropertyModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Cancelar</button>
@@ -103,214 +112,63 @@
             </div>
         </div>
     </div>
-
-    <!-- Edit Property Modal -->
-    <div id="editPropertyModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center pb-3">
-                <h3 class="text-2xl font-bold">Editar Propiedad</h3>
-                <button onclick="hideEditPropertyModal()" class="text-black hover:text-gray-500">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-            <form id="editPropertyForm" class="space-y-4">
-                <input type="hidden" id="editPropertyId" name="id">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Nombre/Alias</label>
-                    <input type="text" id="editNombreAlias" name="nombre_alias" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Dirección Completa</label>
-                    <input type="text" id="editDireccionCompleta" name="direccion_completa" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Tipo de Propiedad</label>
-                    <select id="editTipoPropiedad" name="tipo_propiedad" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        <option value="">Seleccione un tipo</option>
-                        <option value="Casa">Casa</option>
-                        <option value="Departamento">Departamento</option>
-                        <option value="Local Comercial">Local Comercial</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Capacidad Máxima</label>
-                    <input type="number" id="editCapacidadMaxima" name="capacidad_maxima" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="hideEditPropertyModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Guardar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Property Details Modal -->
-    <div id="propertyDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center pb-3">
-                <h3 class="text-2xl font-bold">Detalles de Propiedad</h3>
-                <button onclick="hidePropertyDetailsModal()" class="text-black hover:text-gray-500">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-            <div id="propertyDetailsContent" class="space-y-4">
-                <!-- Los detalles se llenarán dinámicamente -->
-            </div>
-        </div>
-    </div>
-
+    
     <script>
-        // Debugging
-        console.log('Document loaded');
-        console.log('Add property button:', document.getElementById('addPropertyBtn'));
-        console.log('Add property modal:', document.getElementById('addPropertyModal'));
+        let searchTags = [];
 
         // Funciones para mostrar/ocultar modales
         function showAddPropertyModal() {
-            console.log('Mostrando modal de agregar propiedad');
-            const modal = document.getElementById('addPropertyModal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                console.log('Modal mostrado correctamente');
-            } else {
-                console.error('No se encontró el elemento del modal');
-            }
+            document.getElementById('addPropertyModal').classList.remove('hidden');
         }
 
         function hideAddPropertyModal() {
-            console.log('Ocultando modal de agregar propiedad');
-            const modal = document.getElementById('addPropertyModal');
-            if (modal) {
-                modal.classList.add('hidden');
-                document.getElementById('addPropertyForm').reset();
-                console.log('Modal ocultado y formulario reseteado');
-            } else {
-                console.error('No se encontró el elemento del modal');
-            }
+            document.getElementById('addPropertyModal').classList.add('hidden');
+            document.getElementById('addPropertyForm').reset();
         }
 
         function showPropertyDetails(id) {
-            console.log('Redirigiendo a detalles de propiedad:', id);
             window.location.href = `/property/${id}`;
         }
 
-        function hidePropertyDetailsModal() {
-            console.log('Volviendo a la página anterior');
-            window.history.back();
+        // Función para renderizar las etiquetas de búsqueda
+        function renderTags() {
+            const tagsContainer = document.getElementById('tagsContainer');
+            tagsContainer.innerHTML = '';
+            searchTags.forEach((tag, index) => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-medium rounded-full';
+                tagElement.innerHTML = `
+                    ${tag}
+                    <button onclick="removeTag(${index})" class="ml-2 text-indigo-500 hover:text-indigo-700 focus:outline-none">
+                        &times;
+                    </button>
+                `;
+                tagsContainer.appendChild(tagElement);
+            });
         }
 
-        function showEditPropertyModal(id) {
-            console.log('Mostrando modal de editar propiedad:', id);
-            const modal = document.getElementById('editPropertyModal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                
-                // Cargar datos de la propiedad
-                fetch(`/api/properties/${id}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Error al cargar la propiedad');
-                        }
-                        return response.json();
-                    })
-                    .then(property => {
-                        console.log('Cargando datos de propiedad:', property);
-                        document.getElementById('editPropertyId').value = property.id;
-                        document.getElementById('editNombreAlias').value = property.nombre_alias;
-                        document.getElementById('editDireccionCompleta').value = property.direccion_completa;
-                        document.getElementById('editTipoPropiedad').value = property.tipo_propiedad;
-                        document.getElementById('editCapacidadMaxima').value = property.capacidad_maxima;
-                    })
-                    .catch(error => {
-                        console.error('Error loading property:', error);
-                        alert('Error al cargar los datos de la propiedad');
-                    });
-            } else {
-                console.error('No se encontró el elemento del modal de edición');
-            }
+        function removeTag(indexToRemove) {
+            searchTags = searchTags.filter((_, index) => index !== indexToRemove);
+            renderTags();
+            loadProperties();
         }
 
-        function hideEditPropertyModal() {
-            console.log('Ocultando modal de editar propiedad');
-            const modal = document.getElementById('editPropertyModal');
-            if (modal) {
-                modal.classList.add('hidden');
-                console.log('Modal ocultado');
-            } else {
-                console.error('No se encontró el elemento del modal de edición');
-            }
-        }
-
-        // Close modals when clicking outside
-        document.getElementById('addPropertyModal')?.addEventListener('click', function(e) {
-            if (e.target === this) {
-                console.log('Clic fuera del modal de agregar');
-                hideAddPropertyModal();
-            }
-        });
-
-        document.getElementById('editPropertyModal')?.addEventListener('click', function(e) {
-            if (e.target === this) {
-                console.log('Clic fuera del modal de editar');
-                hideEditPropertyModal();
-            }
-        });
-
-        document.getElementById('propertyDetailsModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                console.log('Clic fuera del modal de detalles');
-                hidePropertyDetailsModal();
-            }
-        });
-
-        // Función para cargar propiedades
+        // Función para cargar propiedades basada en las etiquetas
         async function loadProperties() {
-            try {
-                const response = await fetch('/api/search?q=');
-                const properties = await response.json();
-                const propertiesTableBody = document.getElementById('propertiesTableBody');
-                propertiesTableBody.innerHTML = '';
-
-                properties.forEach(p => {
-                    const row = document.createElement('tr');
-                    row.onclick = () => showPropertyDetails(p.id);
-                    row.className = 'cursor-pointer hover:bg-gray-50';
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${p.nombre_alias}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.direccion_completa}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.tipo_propiedad}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.capacidad_maxima}</td>
-                    `;
-                    propertiesTableBody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error al cargar propiedades:', error);
-            }
-        }
-
-        // Función para manejar la búsqueda en tiempo real
-        let searchTimeout;
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            clearTimeout(searchTimeout);
-            const searchTerm = e.target.value;
-            searchTimeout = setTimeout(() => loadProperties(searchTerm), 300);
-        });
-
-        // Función para cargar propiedades
-        async function loadProperties(searchTerm = '') {
+            const searchTerm = searchTags.join(' ');
             try {
                 const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const properties = await response.json();
                 const propertiesTableBody = document.getElementById('propertiesTableBody');
-                propertiesTableBody.innerHTML = '';
+                propertiesTableBody.innerHTML = ''; // Limpiar la tabla
+
+                if (properties.length === 0) {
+                    propertiesTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">No se encontraron propiedades.</td></tr>';
+                    return;
+                }
 
                 properties.forEach(p => {
                     const row = document.createElement('tr');
@@ -326,38 +184,45 @@
                 });
             } catch (error) {
                 console.error('Error al cargar propiedades:', error);
+                const propertiesTableBody = document.getElementById('propertiesTableBody');
+                propertiesTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">Error al cargar las propiedades.</td></tr>';
             }
         }
 
+        // Manejar el formulario para añadir etiquetas
+        document.getElementById('propertySearchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const searchInput = document.getElementById('searchInput');
+            const newTag = searchInput.value.trim();
+
+            if (newTag && !searchTags.includes(newTag)) {
+                searchTags.push(newTag);
+                renderTags();
+                loadProperties();
+            }
+            searchInput.value = ''; // Limpiar input
+        });
+
+        // Limpiar búsqueda y etiquetas con la tecla Escape
+        document.getElementById('searchInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                searchTags = [];
+                renderTags();
+                loadProperties();
+            }
+        });
+
         // Manejador de envío del formulario de agregar propiedad
-        document.getElementById('addPropertyForm').onsubmit = async function(e) {
+        document.getElementById('addPropertyForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Obtener los valores del formulario
-            const nombreAlias = this.querySelector('input[name="nombre_alias"]').value.trim();
-            const direccionCompleta = this.querySelector('textarea[name="direccion_completa"]').value.trim();
-            const tipoPropiedad = this.querySelector('select[name="tipo_propiedad"]').value;
-            const capacidadMaxima = this.querySelector('input[name="capacidad_maxima"]').value.trim();
-
-            // Validar campos
-            if (!nombreAlias || !direccionCompleta || !tipoPropiedad || !capacidadMaxima) {
-                alert('Por favor, complete todos los campos');
-                return;
-            }
-
-            // Validar que la capacidad máxima sea un número
-            const capInt = parseInt(capacidadMaxima);
-            if (isNaN(capInt) || capInt <= 0) {
-                alert('La capacidad máxima debe ser un número mayor que 0');
-                return;
-            }
-
-            // Crear objeto de propiedad
+            const formData = new FormData(this);
             const property = {
-                nombre_alias: nombreAlias,
-                direccion_completa: direccionCompleta,
-                tipo_propiedad: tipoPropiedad,
-                capacidad_maxima: capacidadMaxima
+                nombre_alias: formData.get('nombre_alias'),
+                direccion_completa: formData.get('direccion_completa'),
+                tipo_propiedad: formData.get('tipo_propiedad'),
+                capacidad_maxima: parseInt(formData.get('capacidad_maxima'), 10)
             };
 
             try {
@@ -369,82 +234,26 @@
                     body: JSON.stringify(property)
                 });
 
-                const result = await response.json();
-                
                 if (response.ok) {
-                    // Mostrar mensaje de éxito
                     alert('Propiedad agregada exitosamente');
-                    // Limpiar el formulario
-                    this.reset();
-                    // Actualizar la lista de propiedades
-                    await loadProperties();
-                    // Cerrar el modal
                     hideAddPropertyModal();
+                    location.reload(); 
                 } else {
-                    // Mostrar mensaje de error
+                    const result = await response.json();
                     alert(result.error || 'Error al agregar la propiedad');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error al comunicarse con el servidor');
             }
-        };
+        });
 
-        // Manejador de envío del formulario de editar propiedad
-        document.getElementById('editPropertyForm').onsubmit = async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const property = {
-                nombre_alias: formData.get('nombre_alias'),
-                direccion_completa: formData.get('direccion_completa'),
-                tipo_propiedad: formData.get('tipo_propiedad'),
-                capacidad_maxima: formData.get('capacidad_maxima')
-            };
-
-            try {
-                const response = await fetch(`/api/properties/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(property)
-                });
-
-                if (response.ok) {
-                    // Actualizar la lista de propiedades
-                    await loadProperties();
-                    hideEditPropertyModal();
-                } else {
-                    console.error('Error al editar propiedad');
-                }
-            } catch (error) {
-                console.error('Error:', error);
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('addPropertyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideAddPropertyModal();
             }
-        };
-
-        // Función para eliminar propiedad
-        async function deleteProperty(id) {
-            if (confirm('¿Está seguro que desea eliminar esta propiedad?')) {
-                try {
-                    const response = await fetch(`/api/properties/${id}`, {
-                        method: 'DELETE'
-                    });
-
-                    if (response.ok) {
-                        // Actualizar la lista de propiedades
-                        await loadProperties();
-                    } else {
-                        console.error('Error al eliminar propiedad');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            }
-        }
-
-        // Cargar propiedades al cargar la página
-        window.onload = loadProperties;
+        });
     </script>
 </body>
 </html>

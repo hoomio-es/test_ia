@@ -4,117 +4,101 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"strings" // Importado para manipulación de strings
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
-	"github.com/jgargallo/property-manager/controllers"
-	"github.com/jgargallo/property-manager/models"
-	_ "github.com/lib/pq" // PostgreSQL driver
+	"github.com/jgargallo/property-manager/controllers" // Asegúrate que la ruta del módulo sea correcta
+	"github.com/jgargallo/property-manager/models"      // Asegúrate que la ruta del módulo sea correcta
+	_ "github.com/lib/pq"                               // PostgreSQL driver
 )
 
 var db *sql.DB
 
 func init() {
 	var err error
-	dsn := "postgresql://postgres:postgres@db:5432/test_app?sslmode=disable"
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL environment variable is not set")
+	}
 
-	// Intentar conectar con un máximo de 10 intentos
+	// Retry connecting to the database
 	maxRetries := 10
 	retryDelay := 2 * time.Second
 
 	for i := 0; i < maxRetries; i++ {
-		if i > 0 {
-			log.Printf("Intento de conexión %d/%d...", i+1, maxRetries)
-			time.Sleep(retryDelay)
-		}
-
 		db, err = sql.Open("postgres", dsn)
 		if err != nil {
-			log.Printf("Error opening database connection: %v", err)
+			log.Printf("Error opening database connection: %v. Retrying in %v...", err, retryDelay)
+			time.Sleep(retryDelay)
 			continue
 		}
 
 		err = db.Ping()
 		if err != nil {
-			log.Printf("Error pinging database: %v", err)
+			log.Printf("Error pinging database: %v. Retrying in %v...", err, retryDelay)
+			time.Sleep(retryDelay)
 			continue
 		}
 
-		log.Printf("Conexión exitosa con PostgreSQL")
+		log.Println("Successfully connected to PostgreSQL")
 		break
 	}
 
 	if err != nil {
-		log.Fatalf("No se pudo conectar a la base de datos después de %d intentos", maxRetries)
+		log.Fatalf("Could not connect to the database after %d attempts", maxRetries)
 	}
 
 	// Create tables if they don't exist
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS properties (
-		    id SERIAL PRIMARY KEY,
-		    nombre_alias VARCHAR(255) NOT NULL,
-		    direccion_completa TEXT NOT NULL,
-		    tipo_propiedad VARCHAR(50) NOT NULL,
-		    capacidad_maxima INTEGER NOT NULL
-		);
-	`)
+	schemaBytes, err := os.ReadFile("db/schema.sql")
 	if err != nil {
-		log.Fatal("Error creating table:", err)
+		log.Fatal("Error reading schema.sql file:", err)
 	}
 
-	// Debug: Check if templates directory exists
-	if _, err := os.Stat("/app/templates"); err != nil {
-		log.Printf("WARNING: Templates directory not found: %v", err)
-	}
+	// CORRECCIÓN: Hacer que la creación de la tabla sea idempotente
+	// reemplazando "CREATE TABLE" por "CREATE TABLE IF NOT EXISTS".
+	schema := string(schemaBytes)
+	schema = strings.Replace(schema, "CREATE TABLE", "CREATE TABLE IF NOT EXISTS", 1)
 
-	// Debug: Check if index.html exists
-	if _, err := os.Stat("/app/templates/index.html"); err != nil {
-		log.Printf("WARNING: index.html not found: %v", err)
-	}
-
-	// Debug: List files in templates directory
-	files, err := os.ReadDir("/app/templates")
+	_, err = db.Exec(schema)
 	if err != nil {
-		log.Printf("Error reading templates directory: %v", err)
-	} else {
-		log.Printf("Files in templates directory:")
-		for _, file := range files {
-			log.Printf("- %s", file.Name())
-		}
+		log.Fatal("Error executing schema:", err)
 	}
-
-	// Debug: Test template engine
-	engine := html.New("/app/templates", ".html")
-	if err := engine.Load(); err != nil {
-		log.Printf("Error loading templates: %v", err)
-	}
+	log.Println("Database schema loaded successfully")
 }
 
 func main() {
 	// Load templates
-	engine := html.New("/app/templates", ".html")
+	engine := html.New("./templates", ".html")
+	if err := engine.Load(); err != nil {
+		log.Fatalf("error loading templates: %v", err)
+	}
 
-	// Create property service and controller
+	// Create services and controllers
 	propertyService := models.NewPropertyService(db)
-	propertyController := controllers.NewPropertyController(propertyService, engine)
+	// CORRECTED: Remove the 'engine' argument from the call
+	propertyController := controllers.NewPropertyController(propertyService)
 
-	// Create Fiber instance
+	// Create Fiber app
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})
 
 	// Static files
-	app.Static("/", "/app/public")
+	app.Static("/", "./public")
 
 	// Routes
 	app.Get("/", propertyController.ListProperties)
 	app.Get("/property/:id", propertyController.ShowProperty)
-	app.Post("/api/properties", propertyController.CreateProperty)
-	app.Put("/api/properties/:id", propertyController.UpdateProperty)
-	app.Delete("/api/properties/:id", propertyController.DeleteProperty)
-	app.Get("/api/properties/:id", propertyController.GetProperty)
-	app.Get("/api/search", propertyController.SearchProperties)
+
+	// API Routes
+	api := app.Group("/api")
+	api.Post("/properties", propertyController.CreateProperty)
+	api.Put("/properties/:id", propertyController.UpdateProperty)
+	api.Delete("/properties/:id", propertyController.DeleteProperty)
+	api.Get("/properties/:id", propertyController.GetProperty)
+	api.Get("/search", propertyController.SearchProperties)
 
 	// Start server
 	log.Fatal(app.Listen(":8080"))

@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/gofiber/fiber/v2 v2.46.0
 	github.com/gofiber/template/html/v2 v2.1.3
+	github.com/lib/pq v1.10.9
 )
 
 require (
@@ -13,7 +14,6 @@ require (
 	github.com/gofiber/utils v1.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/klauspost/compress v1.16.3 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
