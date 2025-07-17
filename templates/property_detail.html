@@ -26,7 +26,6 @@
         <form id="editPropertyForm" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
             <h1 class="text-2xl font-bold mb-4">Editar Propiedad: {{.Property.NombreAlias}}</h1>
             
-            <!-- Tab buttons -->
             <div class="border-b border-gray-200 mb-6">
                 <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                     <button type="button" onclick="showTab(1)" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600" aria-current="page">
@@ -42,11 +41,20 @@
             </div>
 
             <input type="hidden" name="id" value="{{.Property.ID}}">
+            <input type="hidden" id="existing-photo-url" value="{{if .Property.FotoURL.Valid}}{{.Property.FotoURL.String}}{{end}}">
 
-            <!-- Tab 1: Detalles del Piso -->
             <div id="tab-1" class="tab-content space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Campos existentes... -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Foto de la Propiedad</label>
+                        <div class="mt-1 flex items-center">
+                            <img id="photo-preview" src="{{if .Property.FotoURL.Valid}}{{.Property.FotoURL.String}}{{else}}https://placehold.co/128x128/e2e8f0/4a5568?text=Sin+Foto{{end}}" class="h-32 w-32 object-cover rounded-md">
+                            <input type="file" name="photo" id="photo-input" class="hidden" accept="image/*">
+                            <button type="button" onclick="document.getElementById('photo-input').click()" class="ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                Cambiar
+                            </button>
+                        </div>
+                    </div>
                     <div><label for="nombre_alias" class="block text-sm font-medium text-gray-700">Nombre/Alias</label><input type="text" name="nombre_alias" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="{{.Property.NombreAlias}}"></div>
                     <div><label for="direccion_completa" class="block text-sm font-medium text-gray-700">Dirección Completa</label><input type="text" name="direccion_completa" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="{{.Property.DireccionCompleta}}"></div>
                     <div><label for="tipo_propiedad" class="block text-sm font-medium text-gray-700">Tipo de Propiedad</label><select name="tipo_propiedad" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="Piso" {{if eq .Property.TipoPropiedad "Piso"}}selected{{end}}>Piso</option><option value="Apartamento" {{if eq .Property.TipoPropiedad "Apartamento"}}selected{{end}}>Apartamento</option><option value="Casa" {{if eq .Property.TipoPropiedad "Casa"}}selected{{end}}>Casa</option><option value="Ático" {{if eq .Property.TipoPropiedad "Ático"}}selected{{end}}>Ático</option><option value="Duplex" {{if eq .Property.TipoPropiedad "Duplex"}}selected{{end}}>Duplex</option></select></div>
@@ -57,24 +65,13 @@
                     <div><label for="cedula_habitabilidad" class="block text-sm font-medium text-gray-700">Cédula Habitabilidad</label><input type="text" name="cedula_habitabilidad" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="{{if .Property.CedulaHabitabilidad.Valid}}{{.Property.CedulaHabitabilidad.String}}{{end}}"></div>
                     <div><label for="licencia_turistica" class="block text-sm font-medium text-gray-700">Licencia Turística</label><input type="text" name="licencia_turistica" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="{{if .Property.LicenciaTuristica.Valid}}{{.Property.LicenciaTuristica.String}}{{end}}"></div>
                     <div class="md:col-span-2"><label for="descripcion_corta" class="block text-sm font-medium text-gray-700">Descripción Corta</label><textarea name="descripcion_corta" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">{{if .Property.DescripcionCorta.Valid}}{{.Property.DescripcionCorta.String}}{{end}}</textarea></div>
-                    
-                    <!-- CORRECCIÓN: Campo de Amenidades como etiquetas -->
-                    <div class="md:col-span-2">
-                        <label for="amenitiesInput" class="block text-sm font-medium text-gray-700">Amenidades</label>
-                        <div class="flex flex-wrap items-center gap-2 p-2 mt-1 border border-gray-300 rounded-md">
-                            <div id="amenitiesTagContainer" class="flex flex-wrap gap-2"></div>
-                            <input type="text" id="amenitiesInput" placeholder="Añadir y pulsar Enter..." class="flex-1 min-w-[150px] border-none outline-none bg-transparent p-1">
-                        </div>
-                        <input type="hidden" name="amenidades" id="amenidadesHidden">
-                    </div>
+                    <div class="md:col-span-2"><label for="amenitiesInput" class="block text-sm font-medium text-gray-700">Amenidades</label><div class="flex flex-wrap items-center gap-2 p-2 mt-1 border border-gray-300 rounded-md"><div id="amenitiesTagContainer" class="flex flex-wrap gap-2"></div><input type="text" id="amenitiesInput" placeholder="Añadir y pulsar Enter..." class="flex-1 min-w-[150px] border-none outline-none bg-transparent p-1"></div><input type="hidden" name="amenidades" id="amenidadesHidden"></div>
                 </div>
             </div>
 
-            <!-- Tab 2 y 3 (sin cambios) -->
             <div id="tab-2" class="tab-content space-y-4 hidden"><!-- ... --></div>
             <div id="tab-3" class="tab-content space-y-4 hidden"><!-- ... --></div>
 
-            <!-- Action Buttons -->
             <div class="mt-8 flex justify-between items-center">
                 <button type="button" onclick="deleteProperty('{{.Property.ID}}')" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">Eliminar</button>
                 <div class="flex space-x-4">
@@ -87,11 +84,21 @@
 
     <script>
         let amenityTags = [];
+        const photoInput = document.getElementById('photo-input');
+        const photoPreview = document.getElementById('photo-preview');
 
-        // --- Lógica para las pestañas (sin cambios) ---
-        function showTab(tabNumber) { /* ... */ }
+        function showTab(tabNumber) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(`tab-${tabNumber}`).classList.remove('hidden');
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('border-indigo-500', 'text-indigo-600');
+                button.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            });
+            const activeButton = document.querySelector(`.tab-button:nth-child(${tabNumber})`);
+            activeButton.classList.add('border-indigo-500', 'text-indigo-600');
+            activeButton.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+        }
 
-        // --- Lógica para las etiquetas de Amenidades ---
         function initializeAmenities() {
             const amenitiesString = "{{if .Property.Amenidades.Valid}}{{.Property.Amenidades.String}}{{end}}";
             if (amenitiesString) {
@@ -137,32 +144,130 @@
             }
         });
 
-        // --- Lógica del formulario (actualizada) ---
+        photoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                photoPreview.src = URL.createObjectURL(file);
+            }
+        });
+
+        const createNullable = (value, type) => {
+            const isValid = value !== null && value.trim() !== '';
+            let parsedValue;
+            switch(type) {
+                case 'Int64': parsedValue = isValid ? parseInt(value, 10) : 0; break;
+                case 'Float64': parsedValue = isValid ? parseFloat(value) : 0.0; break;
+                case 'Time': parsedValue = isValid ? value : null; break;
+                default: parsedValue = value;
+            }
+            return { [type]: parsedValue, Valid: isValid };
+        };
+        const createNullableString = (value) => ({ String: value, Valid: value != null && value.trim() !== '' });
+
         document.getElementById('editPropertyForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const formData = new FormData(this);
             const id = formData.get('id');
+            let photoUrl = document.getElementById('existing-photo-url').value;
 
-            // La función createNullableString ya existe en tu código, la usamos aquí
-            const createNullableString = (value) => ({ String: value, Valid: value != null && value.trim() !== '' });
-            const createNullable = (value, type) => { /* ... */ };
+            // 1. Subir la foto si se ha seleccionado una nueva
+            const photoFile = photoInput.files[0];
+            if (photoFile) {
+                const photoFormData = new FormData();
+                photoFormData.append('photo', photoFile);
+                try {
+                    const uploadResponse = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: photoFormData,
+                    });
+                    if (!uploadResponse.ok) throw new Error('Error al subir la nueva foto.');
+                    const uploadResult = await uploadResponse.json();
+                    photoUrl = uploadResult.url;
+                } catch (error) {
+                    alert(error.message);
+                    return;
+                }
+            }
 
+            // 2. Construir el objeto de la propiedad
             const property = {
-                // ... otros campos
-                amenidades: createNullableString(formData.get('amenidades')), // Se obtiene del input oculto
-                // ... otros campos
+                foto_url: createNullableString(photoUrl),
+                nombre_alias: formData.get('nombre_alias'),
+                direccion_completa: formData.get('direccion_completa'),
+                tipo_propiedad: formData.get('tipo_propiedad'),
+                capacidad_maxima: parseInt(formData.get('capacidad_maxima'), 10) || 0,
+                numero_habitaciones: createNullable(formData.get('numero_habitaciones'), 'Int64'),
+                numero_banos: createNullable(formData.get('numero_banos'), 'Int64'),
+                metros_cuadrados: createNullable(formData.get('metros_cuadrados'), 'Int64'),
+                cedula_habitabilidad: createNullableString(formData.get('cedula_habitabilidad')),
+                licencia_turistica: createNullableString(formData.get('licencia_turistica')),
+                descripcion_corta: createNullableString(formData.get('descripcion_corta')),
+                amenidades: createNullableString(formData.get('amenidades')),
+                codigo_airbnb: createNullableString(formData.get('codigo_airbnb')),
+                url_airbnb: createNullableString(formData.get('url_airbnb')),
+                codigo_booking: createNullableString(formData.get('codigo_booking')),
+                url_booking: createNullableString(formData.get('url_booking')),
+                precio_base_noches: createNullable(formData.get('precio_base_noches'), 'Float64'),
+                coste_limpieza: createNullable(formData.get('coste_limpieza'), 'Float64'),
+                ibi_anual: createNullable(formData.get('ibi_anual'), 'Float64'),
+                gastos_comunidad: createNullable(formData.get('gastos_comunidad'), 'Float64'),
+                hipoteca_mensual: createNullable(formData.get('hipoteca_mensual'), 'Float64'),
+                contacto_propietario_nombre: createNullableString(formData.get('contacto_propietario_nombre')),
+                contacto_propietario_telefono: createNullableString(formData.get('contacto_propietario_telefono')),
+                contacto_propietario_email: createNullableString(formData.get('contacto_propietario_email')),
+                limpiador_nombre: createNullableString(formData.get('limpiador_nombre')),
+                limpiador_telefono: createNullableString(formData.get('limpiador_telefono')),
+                fontanero_nombre: createNullableString(formData.get('fontanero_nombre')),
+                fontanero_telefono: createNullableString(formData.get('fontanero_telefono')),
+                seguro_hogar_aseguradora: createNullableString(formData.get('seguro_hogar_aseguradora')),
+                seguro_hogar_poliza: createNullableString(formData.get('seguro_hogar_poliza')),
+                seguro_hogar_fecha_venc: createNullable(formData.get('seguro_hogar_fecha_venc'), 'Time'),
+                seguro_hogar_telefono: createNullableString(formData.get('seguro_hogar_telefono')),
+                seguro_hogar_email: createNullableString(formData.get('seguro_hogar_email')),
+                notas_adicionales: createNullableString(formData.get('notas_adicionales')),
             };
-            
-            // El resto de la lógica de envío...
+
+            // 3. Enviar los datos actualizados
+            try {
+                const response = await fetch(`/api/properties/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(property)
+                });
+                if (response.ok) {
+                    alert('Propiedad actualizada exitosamente!');
+                    window.location.reload();
+                } else {
+                    const result = await response.json();
+                    alert('Error al actualizar la propiedad: ' + (result.details || result.error));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ocurrió un error al comunicarse con el servidor.');
+            }
         });
+
+        async function deleteProperty(id) {
+            if (confirm('¿Está seguro que desea eliminar esta propiedad?')) {
+                try {
+                    const response = await fetch(`/api/properties/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        alert('Propiedad eliminada.');
+                        window.location.href = '/';
+                    } else {
+                        const result = await response.json();
+                        alert('Error al eliminar: ' + (result.details || result.error));
+                    }
+                } catch (error) {
+                    alert('Error de conexión.');
+                }
+            }
+        }
         
-        // --- Inicialización ---
         window.addEventListener('DOMContentLoaded', () => {
             showTab(1);
             initializeAmenities();
         });
-
-        // ... resto del script
     </script>
 </body>
 </html>

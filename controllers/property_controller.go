@@ -1,8 +1,12 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
+
+	"github.com/google/uuid"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jgargallo/property-manager/models"
@@ -119,4 +123,25 @@ func (c *PropertyController) DeleteProperty(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete property", "details": err.Error()})
 	}
 	return ctx.JSON(fiber.Map{"message": "Property deleted successfully"})
+}
+
+func (c *PropertyController) UploadPhoto(ctx *fiber.Ctx) error {
+	file, err := ctx.FormFile("photo")
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "No se ha subido ningún archivo."})
+	}
+
+	// Genera un nombre de archivo único
+	ext := filepath.Ext(file.Filename)
+	filename := uuid.New().String() + ext
+
+	// Guarda el archivo en el servidor
+	err = ctx.SaveFile(file, fmt.Sprintf("./public/uploads/%s", filename))
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "No se pudo guardar el archivo."})
+	}
+
+	// Devuelve la URL pública del archivo
+	url := fmt.Sprintf("/uploads/%s", filename)
+	return ctx.JSON(fiber.Map{"url": url})
 }

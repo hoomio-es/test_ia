@@ -5,6 +5,9 @@ services:
       - "8080:8080"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/test_app?sslmode=disable
+    volumes:
+      # Esta línea monta el volumen 'uploads_data' en la carpeta donde se guardan las fotos
+      - uploads_data:/app/public/uploads
     depends_on:
       - db
 
@@ -21,3 +24,5 @@ services:
 
 volumes:
   postgres_data:
+  # Aquí se define el nuevo volumen para las fotos
+  uploads_data: {}

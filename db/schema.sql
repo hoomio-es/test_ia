@@ -53,6 +53,7 @@ CREATE TABLE properties (
     contrato_gas_contrato VARCHAR(50),
     contrato_gas_fecha_venc DATE,
     contrato_gas_telefono VARCHAR(20),
+    foto_url TEXT,
     notas_adicionales TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

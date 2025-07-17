@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Property model reflects the full schema
+// Property model reflects the full schema including the new photo URL field.
 type Property struct {
 	ID                            int             `json:"id"`
 	NombreAlias                   string          `json:"nombre_alias"`
@@ -64,6 +64,7 @@ type Property struct {
 	ContratoGasContrato           sql.NullString  `json:"contrato_gas_contrato"`
 	ContratoGasFechaVenc          sql.NullTime    `json:"contrato_gas_fecha_venc"`
 	ContratoGasTelefono           sql.NullString  `json:"contrato_gas_telefono"`
+	FotoURL                       sql.NullString  `json:"foto_url"`
 	NotasAdicionales              sql.NullString  `json:"notas_adicionales"`
 	CreatedAt                     time.Time       `json:"created_at"`
 	UpdatedAt                     time.Time       `json:"updated_at"`
@@ -100,7 +101,7 @@ func scanProperty(row rowScanner, p *Property) error {
 		&p.ContratoAguaEmpresa, &p.ContratoAguaContrato, &p.ContratoAguaFechaVenc, &p.ContratoAguaTelefono,
 		&p.ContratoInternetEmpresa, &p.ContratoInternetContrato, &p.ContratoInternetFechaVenc,
 		&p.ContratoInternetTelefono, &p.ContratoGasEmpresa, &p.ContratoGasContrato,
-		&p.ContratoGasFechaVenc, &p.ContratoGasTelefono, &p.NotasAdicionales, &p.CreatedAt, &p.UpdatedAt,
+		&p.ContratoGasFechaVenc, &p.ContratoGasTelefono, &p.FotoURL, &p.NotasAdicionales, &p.CreatedAt, &p.UpdatedAt,
 	)
 }
 
@@ -148,7 +149,6 @@ func (s *PropertyService) SearchProperties(queries []string) ([]Property, error)
 	var args []interface{}
 	paramIndex := 1
 
-	// Lista de todos los campos de texto en los que se quiere buscar.
 	searchFields := []string{
 		"nombre_alias", "direccion_completa", "tipo_propiedad",
 		"cedula_habitabilidad", "licencia_turistica", "descripcion_corta",
@@ -163,15 +163,11 @@ func (s *PropertyService) SearchProperties(queries []string) ([]Property, error)
 		if q == "" {
 			continue
 		}
-
-		// Para cada término de búsqueda, crea un grupo de condiciones OR.
 		var orConditions []string
 		for _, field := range searchFields {
 			orConditions = append(orConditions, fmt.Sprintf("%s ILIKE $%d", field, paramIndex))
 		}
 		conditions = append(conditions, "("+strings.Join(orConditions, " OR ")+")")
-
-		// Añade el término de búsqueda a los argumentos de la consulta.
 		args = append(args, "%"+q+"%")
 		paramIndex++
 	}
@@ -180,7 +176,6 @@ func (s *PropertyService) SearchProperties(queries []string) ([]Property, error)
 		return s.GetAllProperties()
 	}
 
-	// Une todos los grupos de condiciones con AND para una búsqueda estricta.
 	query := "SELECT * FROM properties WHERE " + strings.Join(conditions, " AND ") + " ORDER BY id ASC"
 
 	rows, err := s.db.Query(query, args...)
@@ -216,7 +211,7 @@ func toSQLValues(p *Property) []interface{} {
 		p.ContratoAguaFechaVenc, p.ContratoAguaTelefono, p.ContratoInternetEmpresa,
 		p.ContratoInternetContrato, p.ContratoInternetFechaVenc, p.ContratoInternetTelefono,
 		p.ContratoGasEmpresa, p.ContratoGasContrato, p.ContratoGasFechaVenc, p.ContratoGasTelefono,
-		p.NotasAdicionales,
+		p.FotoURL, p.NotasAdicionales,
 	}
 }
 
@@ -237,11 +232,11 @@ func (s *PropertyService) CreateProperty(p *Property) error {
             contrato_agua_fecha_venc, contrato_agua_telefono, contrato_internet_empresa,
             contrato_internet_contrato, contrato_internet_fecha_venc, contrato_internet_telefono,
             contrato_gas_empresa, contrato_gas_contrato, contrato_gas_fecha_venc, contrato_gas_telefono,
-            notas_adicionales
+            foto_url, notas_adicionales
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
             $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38,
-            $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54
+            $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55
         )
     `
 	_, err := s.db.Exec(query, toSQLValues(p)...)
@@ -273,8 +268,8 @@ func (s *PropertyService) UpdateProperty(id int, p *Property) error {
             contrato_agua_telefono = $45, contrato_internet_empresa = $46, contrato_internet_contrato = $47,
             contrato_internet_fecha_venc = $48, contrato_internet_telefono = $49, contrato_gas_empresa = $50,
             contrato_gas_contrato = $51, contrato_gas_fecha_venc = $52, contrato_gas_telefono = $53,
-            notas_adicionales = $54, updated_at = NOW()
-        WHERE id = $55
+            foto_url = $54, notas_adicionales = $55, updated_at = NOW()
+        WHERE id = $56
     `
 	args := append(toSQLValues(p), id)
 	_, err := s.db.Exec(query, args...)

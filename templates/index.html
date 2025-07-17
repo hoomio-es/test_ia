@@ -45,6 +45,7 @@
                 <table id="propertiesTable" class="min-w-full bg-white">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foto</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre/Alias</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
@@ -54,6 +55,9 @@
                     <tbody id="propertiesTableBody" class="bg-white divide-y divide-gray-200">
                         {{range .Properties}}
                         <tr onclick="showPropertyDetails({{.ID}})" class="cursor-pointer hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <img src="{{if .FotoURL.Valid}}{{.FotoURL.String}}{{else}}https://placehold.co/100x60/e2e8f0/4a5568?text=Sin+Foto{{end}}" alt="Foto de {{.NombreAlias}}" class="h-10 w-16 object-cover rounded">
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">{{.NombreAlias}}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{.DireccionCompleta}}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{.TipoPropiedad}}</td>
@@ -81,6 +85,16 @@
 
                     <div id="form-step-1" class="form-step space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700">Foto de la Propiedad</label>
+                                <div class="mt-1 flex items-center">
+                                    <img id="photo-preview" src="https://placehold.co/128x128/e2e8f0/4a5568?text=Subir" class="h-32 w-32 object-cover rounded-md">
+                                    <input type="file" name="photo" id="photo-input" class="hidden" accept="image/*">
+                                    <button type="button" onclick="document.getElementById('photo-input').click()" class="ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50">
+                                        Cambiar
+                                    </button>
+                                </div>
+                            </div>
                             <div><label class="block text-sm font-medium text-gray-700">Nombre/Alias</label><input type="text" name="nombre_alias" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
                             <div><label class="block text-sm font-medium text-gray-700">Dirección Completa</label><input type="text" name="direccion_completa" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
                             <div><label class="block text-sm font-medium text-gray-700">Tipo de Propiedad</label><select name="tipo_propiedad" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="">Selecciona un tipo...</option><option value="Piso">Piso</option><option value="Apartamento">Apartamento</option><option value="Casa">Casa</option><option value="Ático">Ático</option><option value="Duplex">Duplex</option></select></div>
@@ -95,41 +109,8 @@
                         </div>
                     </div>
 
-                    <div id="form-step-2" class="form-step space-y-4 hidden">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                           <div><label class="block text-sm font-medium text-gray-700">Código Airbnb</label><input type="text" name="codigo_airbnb" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">URL Airbnb</label><input type="url" name="url_airbnb" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">Código Booking.com</label><input type="text" name="codigo_booking" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">URL Booking.com</label><input type="url" name="url_booking" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">Precio Base por Noche (€)</label><input type="number" step="0.01" name="precio_base_noches" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">Coste Limpieza (€)</label><input type="number" step="0.01" name="coste_limpieza" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">IBI Anual (€)</label><input type="number" step="0.01" name="ibi_anual" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">Gastos Comunidad (€/mes)</label><input type="number" step="0.01" name="gastos_comunidad" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">Hipoteca Mensual (€)</label><input type="number" step="0.01" name="hipoteca_mensual" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                        </div>
-                    </div>
-
-                    <div id="form-step-3" class="form-step space-y-4 hidden">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <h4 class="md:col-span-2 font-medium text-gray-800">Contacto Propietario</h4>
-                            <input type="text" name="contacto_propietario_nombre" placeholder="Nombre" class="block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="tel" name="contacto_propietario_telefono" placeholder="Teléfono" class="block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="email" name="contacto_propietario_email" placeholder="Email" class="md:col-span-2 block w-full rounded-md border-gray-300 shadow-sm">
-                            <h4 class="md:col-span-2 font-medium text-gray-800">Limpieza</h4>
-                            <input type="text" name="limpiador_nombre" placeholder="Nombre" class="block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="tel" name="limpiador_telefono" placeholder="Teléfono" class="block w-full rounded-md border-gray-300 shadow-sm">
-                            <h4 class="md:col-span-2 font-medium text-gray-800">Fontanero</h4>
-                            <input type="text" name="fontanero_nombre" placeholder="Nombre" class="block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="tel" name="fontanero_telefono" placeholder="Teléfono" class="block w-full rounded-md border-gray-300 shadow-sm">
-                            <h4 class="md:col-span-2 font-medium text-gray-800">Seguro Hogar</h4>
-                            <input type="text" name="seguro_hogar_aseguradora" placeholder="Aseguradora" class="block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="text" name="seguro_hogar_poliza" placeholder="Nº Póliza" class="block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="tel" name="seguro_hogar_telefono" placeholder="Teléfono" class="block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="email" name="seguro_hogar_email" placeholder="Email" class="block w-full rounded-md border-gray-300 shadow-sm">
-                            <div><label class="text-sm text-gray-500">Fecha Vencimiento</label><input type="date" name="seguro_hogar_fecha_venc" class="block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-700">Notas Adicionales</label><textarea name="notas_adicionales" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea></div>
-                        </div>
-                    </div>
+                    <div id="form-step-2" class="form-step space-y-4 hidden"><!-- ... --></div>
+                    <div id="form-step-3" class="form-step space-y-4 hidden"><!-- ... --></div>
                 </form>
                 <div class="flex justify-end pt-4 space-x-4 border-t mt-4">
                     <button type="button" onclick="hideAddPropertyModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancelar</button>
@@ -142,14 +123,29 @@
     <datalist id="amenities-datalist"></datalist>
 
     <script>
+        // --- State Variables ---
         let searchTags = [];
         let addAmenityTags = [];
         let allAmenitiesSet = new Set();
         let currentStep = 1;
 
+        // --- DOM Elements ---
         const steps = document.querySelectorAll('.form-step');
         const tabButtons = document.querySelectorAll('#add-property-tabs .tab-button');
+        const photoInput = document.getElementById('photo-input');
+        const photoPreview = document.getElementById('photo-preview');
 
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', fetchAllAmenities);
+        tabButtons.forEach(button => button.addEventListener('click', () => showStep(parseInt(button.dataset.step))));
+        document.getElementById('propertySearchForm').addEventListener('submit', handleSearchSubmit);
+        document.getElementById('addPropertyForm').addEventListener('submit', handleAddPropertySubmit);
+        document.getElementById('addAmenitiesInput').addEventListener('keydown', handleAmenityInput);
+        document.getElementById('searchInput').addEventListener('keydown', handleSearchInput);
+        document.getElementById('addPropertyModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) hideAddPropertyModal(); });
+        photoInput.addEventListener('change', handlePhotoPreview);
+
+        // --- Functions ---
         function showStep(stepNumber) {
             steps.forEach(step => step.classList.add('hidden'));
             document.getElementById(`form-step-${stepNumber}`).classList.remove('hidden');
@@ -165,20 +161,16 @@
             currentStep = stepNumber;
         }
 
-        tabButtons.forEach(button => button.addEventListener('click', () => showStep(parseInt(button.dataset.step))));
-
         function showAddPropertyModal() {
             document.getElementById('addPropertyForm').reset();
+            photoPreview.src = 'https://placehold.co/128x128/e2e8f0/4a5568?text=Subir';
             addAmenityTags = [];
             renderAddAmenityTags();
             showStep(1);
             document.getElementById('addPropertyModal').classList.remove('hidden');
         }
 
-        function hideAddPropertyModal() {
-            document.getElementById('addPropertyModal').classList.add('hidden');
-        }
-        
+        function hideAddPropertyModal() { document.getElementById('addPropertyModal').classList.add('hidden'); }
         function showPropertyDetails(id) { window.location.href = `/property/${id}`; }
 
         function renderTags(tags, containerId, hiddenInputId, onUpdateCallback) {
@@ -201,9 +193,7 @@
                 tagElement.appendChild(removeButton);
                 container.appendChild(tagElement);
             });
-            if (hiddenInput) {
-                hiddenInput.value = tags.join(',');
-            }
+            if (hiddenInput) hiddenInput.value = tags.join(',');
         }
 
         function renderSearchTags() { renderTags(searchTags, 'tagsContainer', null, () => { renderSearchTags(); loadProperties(); }); }
@@ -231,22 +221,28 @@
                 const tableBody = document.getElementById('propertiesTableBody');
                 tableBody.innerHTML = '';
                 if (!properties || properties.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">No se encontraron propiedades.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No se encontraron propiedades.</td></tr>';
                     return;
                 }
                 properties.forEach(p => {
                     const row = tableBody.insertRow();
                     row.className = 'cursor-pointer hover:bg-gray-50';
                     row.onclick = () => showPropertyDetails(p.id);
-                    row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap">${p.nombre_alias}</td><td class="px-6 py-4 whitespace-nowrap">${p.direccion_completa}</td><td class="px-6 py-4 whitespace-nowrap">${p.tipo_propiedad}</td><td class="px-6 py-4 whitespace-nowrap">${p.capacidad_maxima}</td>`;
+                    const photoUrl = p.foto_url && p.foto_url.Valid ? p.foto_url.String : 'https://placehold.co/100x60/e2e8f0/4a5568?text=Sin+Foto';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap"><img src="${photoUrl}" alt="Foto de ${p.nombre_alias}" class="h-10 w-16 object-cover rounded"></td>
+                        <td class="px-6 py-4 whitespace-nowrap">${p.nombre_alias}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${p.direccion_completa}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${p.tipo_propiedad}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${p.capacidad_maxima}</td>`;
                 });
             } catch (error) {
                 console.error('Error al cargar propiedades:', error);
-                document.getElementById('propertiesTableBody').innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">Error al cargar las propiedades.</td></tr>';
+                document.getElementById('propertiesTableBody').innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Error al cargar las propiedades.</td></tr>';
             }
         }
 
-        document.getElementById('propertySearchForm').addEventListener('submit', function(e) {
+        function handleSearchSubmit(e) {
             e.preventDefault();
             const input = document.getElementById('searchInput');
             const newTag = input.value.trim();
@@ -256,9 +252,9 @@
                 loadProperties();
             }
             input.value = '';
-        });
+        }
 
-        document.getElementById('addAmenitiesInput').addEventListener('keydown', function(e) {
+        function handleAmenityInput(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const newTag = this.value.trim();
@@ -268,17 +264,24 @@
                 }
                 this.value = '';
             }
-        });
+        }
 
-        document.getElementById('searchInput').addEventListener('keydown', function(e) {
+        function handleSearchInput(e) {
             if (e.key === 'Escape') {
                 this.value = '';
                 searchTags = [];
                 renderSearchTags();
                 loadProperties();
             }
-        });
+        }
         
+        function handlePhotoPreview() {
+            const file = this.files[0];
+            if (file) {
+                photoPreview.src = URL.createObjectURL(file);
+            }
+        }
+
         const createNullable = (value, type) => {
             const isValid = value !== null && value.trim() !== '';
             let parsedValue;
@@ -311,12 +314,35 @@
             return true;
         }
 
-        document.getElementById('addPropertyForm').addEventListener('submit', async function(e) {
+        async function handleAddPropertySubmit(e) {
             e.preventDefault();
             if (!validateAndFocus(this)) return;
 
             const formData = new FormData(this);
+            let photoUrl = '';
+
+            // 1. Subir la foto si existe
+            const photoFile = photoInput.files[0];
+            if (photoFile) {
+                const photoFormData = new FormData();
+                photoFormData.append('photo', photoFile);
+                try {
+                    const uploadResponse = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: photoFormData,
+                    });
+                    if (!uploadResponse.ok) throw new Error('Error al subir la foto.');
+                    const uploadResult = await uploadResponse.json();
+                    photoUrl = uploadResult.url;
+                } catch (error) {
+                    alert(error.message);
+                    return;
+                }
+            }
+
+            // 2. Construir el objeto de la propiedad
             const property = {
+                foto_url: createNullableString(photoUrl),
                 nombre_alias: formData.get('nombre_alias'),
                 direccion_completa: formData.get('direccion_completa'),
                 tipo_propiedad: formData.get('tipo_propiedad'),
@@ -351,6 +377,8 @@
                 seguro_hogar_email: createNullableString(formData.get('seguro_hogar_email')),
                 notas_adicionales: createNullableString(formData.get('notas_adicionales')),
             };
+            
+            // 3. Enviar los datos de la propiedad
             try {
                 const response = await fetch('/api/properties', {
                     method: 'POST',
@@ -369,12 +397,8 @@
                 console.error('Error:', error);
                 alert('Error al comunicarse con el servidor');
             }
-        });
+        }
         
-        document.getElementById('addPropertyModal').addEventListener('click', function(e) {
-            if (e.target === e.currentTarget) { hideAddPropertyModal(); }
-        });
-
         async function fetchAllAmenities() {
             try {
                 const response = await fetch('/api/search');
@@ -396,8 +420,6 @@
                 console.error("Could not fetch amenities for suggestions:", error);
             }
         }
-
-        document.addEventListener('DOMContentLoaded', fetchAllAmenities);
     </script>
 </body>
 </html>

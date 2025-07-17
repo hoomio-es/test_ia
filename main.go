@@ -22,6 +22,10 @@ func init() {
 	if dsn == "" {
 		log.Fatal("DATABASE_URL environment variable is not set")
 	}
+	// Crea el directorio de subidas si no existe
+	if err := os.MkdirAll("./public/uploads", os.ModePerm); err != nil {
+		log.Fatal("No se pudo crear el directorio de subidas:", err)
+	}
 
 	// Retry connecting to the database
 	maxRetries := 10
@@ -84,7 +88,10 @@ func main() {
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})
+	// Sirve los archivos estáticos (incluyendo las imágenes subidas)
+	app.Static("/uploads", "./public/uploads")
 
+	// ... (resto de las rutas)
 	// Static files
 	app.Static("/", "./public")
 
@@ -99,6 +106,7 @@ func main() {
 	api.Delete("/properties/:id", propertyController.DeleteProperty)
 	api.Get("/properties/:id", propertyController.GetProperty)
 	api.Get("/search", propertyController.SearchProperties)
+	api.Post("/upload", propertyController.UploadPhoto) // Añade esta nueva ruta
 
 	// Start server
 	log.Fatal(app.Listen(":8080"))
