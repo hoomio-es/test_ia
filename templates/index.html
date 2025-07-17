@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Property Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo para resaltar campos editables */
+        .editable-field {
+            transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+        .editable-field:focus {
+            --tw-ring-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 0 3px var(--tw-ring-color);
+        }
+        /* Estilo para resaltar campos vacíos */
+        .empty-field-highlight {
+            border-width: 2px !important;
+            border-color: #6b7280 !important; /* gray-500 */
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <nav class="bg-white shadow-lg">
@@ -95,22 +110,55 @@
                                     </button>
                                 </div>
                             </div>
-                            <div><label class="block text-sm font-medium text-gray-700">Nombre/Alias</label><input type="text" name="nombre_alias" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Dirección Completa</label><input type="text" name="direccion_completa" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Tipo de Propiedad</label><select name="tipo_propiedad" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="">Selecciona un tipo...</option><option value="Piso">Piso</option><option value="Apartamento">Apartamento</option><option value="Casa">Casa</option><option value="Ático">Ático</option><option value="Duplex">Duplex</option></select></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Capacidad Máxima</label><input type="number" name="capacidad_maxima" required min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Nº Habitaciones</label><input type="number" name="numero_habitaciones" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Nº Baños</label><input type="number" name="numero_banos" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Metros Cuadrados</label><input type="number" name="metros_cuadrados" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Cédula Habitabilidad</label><input type="text" name="cedula_habitabilidad" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Licencia Turística</label><input type="text" name="licencia_turistica" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-700">Descripción Corta</label><textarea name="descripcion_corta" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea></div>
-                            <div class="md:col-span-2 relative"><label for="addAmenitiesInput" class="block text-sm font-medium text-gray-700">Amenidades</label><div class="flex flex-wrap items-center gap-2 p-2 mt-1 border border-gray-300 rounded-md"><div id="addAmenitiesTagContainer" class="flex flex-wrap gap-2"></div><input type="text" id="addAmenitiesInput" placeholder="Añadir y pulsar Enter..." class="flex-1 min-w-[150px] border-none outline-none bg-transparent p-1" list="amenities-datalist"></div><input type="hidden" name="amenidades" id="addAmenidadesHidden"></div>
+                            <div><label class="block text-sm font-medium text-gray-700">Nombre/Alias</label><input type="text" name="nombre_alias" required class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                            <div><label class="block text-sm font-medium text-gray-700">Dirección Completa</label><input type="text" name="direccion_completa" required class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                            <div><label class="block text-sm font-medium text-gray-700">Tipo de Propiedad</label><select name="tipo_propiedad" required class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="">Selecciona un tipo...</option><option value="Piso">Piso</option><option value="Apartamento">Apartamento</option><option value="Casa">Casa</option><option value="Ático">Ático</option><option value="Duplex">Duplex</option></select></div>
+                            <div><label class="block text-sm font-medium text-gray-700">Capacidad Máxima</label><input type="number" name="capacidad_maxima" required min="1" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                            <div><label class="block text-sm font-medium text-gray-700">Nº Habitaciones</label><input type="number" name="numero_habitaciones" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                            <div><label class="block text-sm font-medium text-gray-700">Nº Baños</label><input type="number" name="numero_banos" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                            <div><label class="block text-sm font-medium text-gray-700">Metros Cuadrados</label><input type="number" name="metros_cuadrados" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                            <div><label class="block text-sm font-medium text-gray-700">Cédula Habitabilidad</label><input type="text" name="cedula_habitabilidad" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                            <div><label class="block text-sm font-medium text-gray-700">Licencia Turística</label><input type="text" name="licencia_turistica" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                            <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-700">Descripción Corta</label><textarea name="descripcion_corta" rows="2" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea></div>
+                            <div class="md:col-span-2 relative"><label for="addAmenitiesInput" class="block text-sm font-medium text-gray-700">Amenidades</label><div class="flex flex-wrap items-center gap-2 p-2 mt-1 border border-gray-300 rounded-md editable-field"><div id="addAmenitiesTagContainer" class="flex flex-wrap gap-2"></div><input type="text" id="addAmenitiesInput" placeholder="Añadir y pulsar Enter..." class="flex-1 min-w-[150px] border-none outline-none bg-transparent p-1" list="amenities-datalist"></div><input type="hidden" name="amenidades" id="addAmenidadesHidden"></div>
                         </div>
                     </div>
 
-                    <div id="form-step-2" class="form-step space-y-4 hidden"><!-- ... --></div>
-                    <div id="form-step-3" class="form-step space-y-4 hidden"><!-- ... --></div>
+                    <div id="form-step-2" class="form-step space-y-4 hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div><label class="block text-sm font-medium text-gray-700">Código Airbnb</label><input type="text" name="codigo_airbnb" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                           <div><label class="block text-sm font-medium text-gray-700">URL Airbnb</label><input type="url" name="url_airbnb" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                           <div><label class="block text-sm font-medium text-gray-700">Código Booking.com</label><input type="text" name="codigo_booking" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                           <div><label class="block text-sm font-medium text-gray-700">URL Booking.com</label><input type="url" name="url_booking" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                           <div><label class="block text-sm font-medium text-gray-700">Precio Base por Noche (€)</label><input type="number" step="0.01" name="precio_base_noches" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                           <div><label class="block text-sm font-medium text-gray-700">Coste Limpieza (€)</label><input type="number" step="0.01" name="coste_limpieza" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                           <div><label class="block text-sm font-medium text-gray-700">IBI Anual (€)</label><input type="number" step="0.01" name="ibi_anual" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                           <div><label class="block text-sm font-medium text-gray-700">Gastos Comunidad (€/mes)</label><input type="number" step="0.01" name="gastos_comunidad" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                           <div><label class="block text-sm font-medium text-gray-700">Hipoteca Mensual (€)</label><input type="number" step="0.01" name="hipoteca_mensual" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                        </div>
+                    </div>
+
+                    <div id="form-step-3" class="form-step space-y-4 hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <h4 class="md:col-span-2 font-medium text-gray-800">Contacto Propietario</h4>
+                            <input type="text" name="contacto_propietario_nombre" placeholder="Nombre" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
+                            <input type="tel" name="contacto_propietario_telefono" placeholder="Teléfono" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
+                            <input type="email" name="contacto_propietario_email" placeholder="Email" class="editable-field md:col-span-2 block w-full rounded-md border-gray-300 shadow-sm">
+                            <h4 class="md:col-span-2 font-medium text-gray-800">Limpieza</h4>
+                            <input type="text" name="limpiador_nombre" placeholder="Nombre" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
+                            <input type="tel" name="limpiador_telefono" placeholder="Teléfono" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
+                            <h4 class="md:col-span-2 font-medium text-gray-800">Fontanero</h4>
+                            <input type="text" name="fontanero_nombre" placeholder="Nombre" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
+                            <input type="tel" name="fontanero_telefono" placeholder="Teléfono" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
+                            <h4 class="md:col-span-2 font-medium text-gray-800">Seguro Hogar</h4>
+                            <input type="text" name="seguro_hogar_aseguradora" placeholder="Aseguradora" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
+                            <input type="text" name="seguro_hogar_poliza" placeholder="Nº Póliza" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
+                            <input type="tel" name="seguro_hogar_telefono" placeholder="Teléfono" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
+                            <input type="email" name="seguro_hogar_email" placeholder="Email" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
+                            <div><label class="text-sm text-gray-500">Fecha Vencimiento</label><input type="date" name="seguro_hogar_fecha_venc" class="editable-field block w-full rounded-md border-gray-300 shadow-sm"></div>
+                            <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-700">Notas Adicionales</label><textarea name="notas_adicionales" rows="3" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea></div>
+                        </div>
+                    </div>
                 </form>
                 <div class="flex justify-end pt-4 space-x-4 border-t mt-4">
                     <button type="button" onclick="hideAddPropertyModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancelar</button>
@@ -123,29 +171,17 @@
     <datalist id="amenities-datalist"></datalist>
 
     <script>
-        // --- State Variables ---
         let searchTags = [];
         let addAmenityTags = [];
         let allAmenitiesSet = new Set();
         let currentStep = 1;
 
-        // --- DOM Elements ---
-        const steps = document.querySelectorAll('.form-step');
+        const addForm = document.getElementById('addPropertyForm');
+        const steps = addForm.querySelectorAll('.form-step');
         const tabButtons = document.querySelectorAll('#add-property-tabs .tab-button');
         const photoInput = document.getElementById('photo-input');
         const photoPreview = document.getElementById('photo-preview');
 
-        // --- Event Listeners ---
-        document.addEventListener('DOMContentLoaded', fetchAllAmenities);
-        tabButtons.forEach(button => button.addEventListener('click', () => showStep(parseInt(button.dataset.step))));
-        document.getElementById('propertySearchForm').addEventListener('submit', handleSearchSubmit);
-        document.getElementById('addPropertyForm').addEventListener('submit', handleAddPropertySubmit);
-        document.getElementById('addAmenitiesInput').addEventListener('keydown', handleAmenityInput);
-        document.getElementById('searchInput').addEventListener('keydown', handleSearchInput);
-        document.getElementById('addPropertyModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) hideAddPropertyModal(); });
-        photoInput.addEventListener('change', handlePhotoPreview);
-
-        // --- Functions ---
         function showStep(stepNumber) {
             steps.forEach(step => step.classList.add('hidden'));
             document.getElementById(`form-step-${stepNumber}`).classList.remove('hidden');
@@ -161,12 +197,15 @@
             currentStep = stepNumber;
         }
 
+        tabButtons.forEach(button => button.addEventListener('click', () => showStep(parseInt(button.dataset.step))));
+
         function showAddPropertyModal() {
-            document.getElementById('addPropertyForm').reset();
+            addForm.reset();
             photoPreview.src = 'https://placehold.co/128x128/e2e8f0/4a5568?text=Subir';
             addAmenityTags = [];
             renderAddAmenityTags();
             showStep(1);
+            highlightEmptyFields(addForm);
             document.getElementById('addPropertyModal').classList.remove('hidden');
         }
 
@@ -193,11 +232,13 @@
                 tagElement.appendChild(removeButton);
                 container.appendChild(tagElement);
             });
-            if (hiddenInput) hiddenInput.value = tags.join(',');
+            if (hiddenInput) {
+                hiddenInput.value = tags.join(',');
+            }
         }
 
         function renderSearchTags() { renderTags(searchTags, 'tagsContainer', null, () => { renderSearchTags(); loadProperties(); }); }
-        function renderAddAmenityTags() { renderTags(addAmenityTags, 'addAmenitiesTagContainer', 'addAmenidadesHidden', renderAddAmenityTags); updateAmenityDatalist(); }
+        function renderAddAmenityTags() { renderTags(addAmenityTags, 'addAmenitiesTagContainer', 'addAmenidadesHidden', () => { renderAddAmenityTags(); highlightEmptyFields(addForm); }); updateAmenityDatalist(); }
         
         function updateAmenityDatalist() {
             const datalist = document.getElementById('amenities-datalist');
@@ -209,6 +250,27 @@
                     datalist.appendChild(option);
                 }
             });
+        }
+
+        function highlightEmptyFields(form) {
+            const inputs = form.querySelectorAll('input[type="text"], input[type="number"], input[type="url"], input[type="tel"], input[type="email"], input[type="date"], textarea, select');
+            inputs.forEach(input => {
+                if (input.classList.contains('border-red-500')) return;
+                if (!input.value || input.value.trim() === '') {
+                    input.classList.add('empty-field-highlight');
+                } else {
+                    input.classList.remove('empty-field-highlight');
+                }
+            });
+            const amenitiesContainer = form.querySelector('#addAmenitiesTagContainer, #amenitiesTagContainer')?.parentElement;
+            if (amenitiesContainer) {
+                const tags = form.id === 'addPropertyForm' ? addAmenityTags : amenityTags;
+                if (tags.length === 0) {
+                    amenitiesContainer.classList.add('empty-field-highlight');
+                } else {
+                    amenitiesContainer.classList.remove('empty-field-highlight');
+                }
+            }
         }
 
         async function loadProperties() {
@@ -229,12 +291,7 @@
                     row.className = 'cursor-pointer hover:bg-gray-50';
                     row.onclick = () => showPropertyDetails(p.id);
                     const photoUrl = p.foto_url && p.foto_url.Valid ? p.foto_url.String : 'https://placehold.co/100x60/e2e8f0/4a5568?text=Sin+Foto';
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap"><img src="${photoUrl}" alt="Foto de ${p.nombre_alias}" class="h-10 w-16 object-cover rounded"></td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.nombre_alias}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.direccion_completa}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.tipo_propiedad}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${p.capacidad_maxima}</td>`;
+                    row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap"><img src="${photoUrl}" alt="Foto de ${p.nombre_alias}" class="h-10 w-16 object-cover rounded"></td><td class="px-6 py-4 whitespace-nowrap">${p.nombre_alias}</td><td class="px-6 py-4 whitespace-nowrap">${p.direccion_completa}</td><td class="px-6 py-4 whitespace-nowrap">${p.tipo_propiedad}</td><td class="px-6 py-4 whitespace-nowrap">${p.capacidad_maxima}</td>`;
                 });
             } catch (error) {
                 console.error('Error al cargar propiedades:', error);
@@ -242,7 +299,7 @@
             }
         }
 
-        function handleSearchSubmit(e) {
+        document.getElementById('propertySearchForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const input = document.getElementById('searchInput');
             const newTag = input.value.trim();
@@ -252,9 +309,9 @@
                 loadProperties();
             }
             input.value = '';
-        }
+        });
 
-        function handleAmenityInput(e) {
+        document.getElementById('addAmenitiesInput').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const newTag = this.value.trim();
@@ -264,23 +321,23 @@
                 }
                 this.value = '';
             }
-        }
+        });
 
-        function handleSearchInput(e) {
+        document.getElementById('searchInput').addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 this.value = '';
                 searchTags = [];
                 renderSearchTags();
                 loadProperties();
             }
-        }
+        });
         
-        function handlePhotoPreview() {
+        photoInput.addEventListener('change', function() {
             const file = this.files[0];
             if (file) {
                 photoPreview.src = URL.createObjectURL(file);
             }
-        }
+        });
 
         const createNullable = (value, type) => {
             const isValid = value !== null && value.trim() !== '';
@@ -314,14 +371,13 @@
             return true;
         }
 
-        async function handleAddPropertySubmit(e) {
+        addForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             if (!validateAndFocus(this)) return;
 
             const formData = new FormData(this);
             let photoUrl = '';
 
-            // 1. Subir la foto si existe
             const photoFile = photoInput.files[0];
             if (photoFile) {
                 const photoFormData = new FormData();
@@ -340,7 +396,6 @@
                 }
             }
 
-            // 2. Construir el objeto de la propiedad
             const property = {
                 foto_url: createNullableString(photoUrl),
                 nombre_alias: formData.get('nombre_alias'),
@@ -377,8 +432,6 @@
                 seguro_hogar_email: createNullableString(formData.get('seguro_hogar_email')),
                 notas_adicionales: createNullableString(formData.get('notas_adicionales')),
             };
-            
-            // 3. Enviar los datos de la propiedad
             try {
                 const response = await fetch('/api/properties', {
                     method: 'POST',
@@ -397,8 +450,12 @@
                 console.error('Error:', error);
                 alert('Error al comunicarse con el servidor');
             }
-        }
+        });
         
+        document.getElementById('addPropertyModal').addEventListener('click', function(e) {
+            if (e.target === e.currentTarget) { hideAddPropertyModal(); }
+        });
+
         async function fetchAllAmenities() {
             try {
                 const response = await fetch('/api/search');
@@ -420,6 +477,11 @@
                 console.error("Could not fetch amenities for suggestions:", error);
             }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAllAmenities();
+            addForm.addEventListener('input', () => highlightEmptyFields(addForm));
+        });
     </script>
 </body>
 </html>
