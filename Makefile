@@ -13,6 +13,7 @@ help:
 	@echo "  restart	Reiniciar los contenedores"
 	@echo "  logs		Ver los logs de los contenedores"
 	@echo "  clean		Limpiar imágenes y volúmenes"
+	@echo "  initdb	Inicializar la base de datos"
 
 .PHONY: build
 build:
@@ -44,3 +45,9 @@ clean:
 	@echo "Limpiando imágenes y volúmenes..."
 	$(DOCKER_COMPOSE) down -v
 	docker image prune -f
+
+.PHONY: initdb
+initdb:
+	@echo "Inicializando la base de datos en el contenedor..."
+	$(DOCKER_COMPOSE) cp db/init.sh db:/docker-entrypoint-initdb.d/init.sh
+	$(DOCKER_COMPOSE) exec db bash -c "su - postgres -c '/docker-entrypoint-initdb.d/init.sh'"

@@ -3,484 +3,622 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Property Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Property Manager - Dashboard</title>
     <style>
-        /* Estilo para resaltar campos editables */
-        .editable-field {
-            transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        /* ===== TEMA INSPIRADO EN EL AUDITOR ===== */
+        :root {
+            --bg: #f7fafc;
+            --panel: #ffffff;
+            --muted: #64748b;
+            --text: #24324a;
+            --accent: #4f46e5; /* Indigo-600 */
+            --accent-light: #e0e7ff; /* Indigo-100 */
+            --danger: #dc2626;
+            --border: #e5e7eb;
+            --shadow: 0 1px 3px rgba(2, 8, 23, .06), 0 1px 2px rgba(2, 8, 23, .04);
+            --shadow-lg: 0 10px 15px rgba(2, 8, 23, .06), 0 4px 6px rgba(2, 8, 23, .05);
+            --radius: 14px;
         }
-        .editable-field:focus {
-            --tw-ring-color: rgba(99, 102, 241, 0.5);
-            box-shadow: 0 0 0 3px var(--tw-ring-color);
-        }
-        /* Estilo para resaltar campos vacíos */
-        .empty-field-highlight {
-            border-width: 2px !important;
-            border-color: #6b7280 !important; /* gray-500 */
-        }
+
+        html, body { height: 100%; }
+        body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; overflow-y: hidden; }
+
+        header { display: flex; gap: 12px; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--border); background: rgba(255, 255, 255, .9); backdrop-filter: blur(6px); z-index: 20; }
+        header h1 { font-size: 18px; margin: 0; letter-spacing: .2px; font-weight: 700; }
+        header .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+        .container { display: grid; grid-template-columns: 480px 1fr; gap: 16px; padding: 16px; height: calc(100vh - 57px); }
+        
+        .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); display: flex; flex-direction: column; }
+        .panel-header { padding: 14px; border-bottom: 1px solid var(--border); }
+        .panel-header h2 { margin: 0; font-size: 16px; font-weight: 600; }
+        .panel-content { padding: 14px; overflow-y: auto; flex-grow: 1; }
+        
+        /* ===== ESTILO MODIFICADO PARA LOS BOTONES ===== */
+        .panel-footer { padding: 14px; border-bottom: 1px solid var(--border); background: #f9fafb; }
+
+        /* Estilos de inputs y botones */
+        button, .btn { background: #fff; color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; cursor: pointer; box-shadow: var(--shadow); font-weight: 500; transition: all 0.2s; }
+        button:hover, .btn:hover { border-color: #cbd5e1; box-shadow: var(--shadow-lg); }
+        .btn-primary { background: var(--accent); color: #ffffff; border-color: var(--accent); }
+        .btn-danger { background: var(--danger); color: #ffffff; border-color: #b91c1c; }
+        
+        input, select, textarea { width: 100%; box-sizing: border-box; background: #fff; color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; resize: vertical; box-shadow: inset 0 1px 0 rgba(2, 8, 23, .03); }
+
+        /* Estilo para resaltar campos */
+        .editable-field:focus { --tw-ring-color: rgba(99, 102, 241, 0.5); box-shadow: 0 0 0 3px var(--tw-ring-color); border-color: var(--accent); outline: none; }
+        .empty-field-highlight { border-width: 2px !important; border-color: #6b7280 !important; }
+
+        /* Tabla de propiedades */
+        #propertiesTable { width: 100%; border-collapse: collapse; }
+        #propertiesTable th, #propertiesTable td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+        #propertiesTable th { font-size: 12px; color: var(--muted); text-transform: uppercase; }
+        #propertiesTable tbody tr { cursor: pointer; transition: background-color 0.15s; }
+        #propertiesTable tbody tr:hover { background-color: #f8fafc; }
+        #propertiesTable tbody tr.selected-row { background-color: var(--accent-light); font-weight: 500; }
+        #propertiesTable img { height: 32px; width: 52px; object-cover; border-radius: 6px; }
+
+        /* Formularios */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-grid .col-span-2 { grid-column: span 2; }
+        .form-grid label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 4px; color: var(--muted); }
+        
+        /* Tabs del formulario de detalle */
+        .tabs-nav { display: flex; gap: 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px; padding: 0 14px; }
+        .tab-button { appearance: none; background: none; border: none; border-bottom: 2px solid transparent; padding: 12px 4px; cursor: pointer; font-weight: 500; color: var(--muted); }
+        .tab-button.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Tags de búsqueda y amenidades */
+        .tags-input-wrapper { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 12px; }
+        .tags-input-wrapper input { border: none; outline: none; flex: 1; min-width: 150px; padding: 0; }
+        .tag { display: inline-flex; align-items: center; padding: 4px 10px; background: #eef2ff; color: #312e81; border-radius: 99px; font-size: 13px; font-weight: 500; }
+        .tag button { margin-left: 8px; background: none; border: none; cursor: pointer; color: #4338ca; font-size: 16px; line-height: 1; }
+        
+        #detail-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--muted); }
+        .hidden { display: none !important; }
+
     </style>
 </head>
-<body class="bg-gray-100">
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <span class="text-xl font-bold text-gray-800">Property Manager</span>
-                    </div>
-                </div>
-            </div>
+<body>
+    <header>
+        <h1>🏡 Property Manager</h1>
+        <div class="right">
+            <button id="addPropertyBtn" class="btn btn-primary">Añadir Nueva Propiedad</button>
         </div>
-    </nav>
+    </header>
 
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-            <h1 class="text-2xl font-bold mb-4">Gestión de Propiedades</h1>
-            
-            <form id="propertySearchForm" class="mb-6">
-                <div class="flex flex-wrap items-center gap-2 p-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition">
-                    <div id="tagsContainer" class="flex flex-wrap gap-2"></div>
-                    <input type="text" 
-                           id="searchInput" 
-                           placeholder="Añadir término y pulsar Enter..." 
-                           class="flex-1 min-w-[150px] border-none outline-none bg-transparent p-1">
-                </div>
-            </form>
-
-            <button 
-                id="addPropertyBtn"
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6"
-                onclick="showAddPropertyModal()"
-            >
-                Añadir Nueva Propiedad
-            </button>
-
-            <div class="overflow-x-auto">
-                <table id="propertiesTable" class="min-w-full bg-white">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foto</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre/Alias</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacidad</th>
-                        </tr>
-                    </thead>
-                    <tbody id="propertiesTableBody" class="bg-white divide-y divide-gray-200">
-                        {{range .Properties}}
-                        <tr onclick="showPropertyDetails({{.ID}})" class="cursor-pointer hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <img src="{{if .FotoURL.Valid}}{{.FotoURL.String}}{{else}}https://placehold.co/100x60/e2e8f0/4a5568?text=Sin+Foto{{end}}" alt="Foto de {{.NombreAlias}}" class="h-10 w-16 object-cover rounded">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{.NombreAlias}}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{.DireccionCompleta}}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{.TipoPropiedad}}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{.CapacidadMaxima}}</td>
-                        </tr>
-                        {{end}}
-                    </tbody>
-                </table>
+    <div class="container">
+        <section id="property-list-panel" class="panel">
+            <div class="panel-header">
+                <h2>Propiedades</h2>
             </div>
-        </div>
-    </div>
-
-    <div id="addPropertyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden">
-        <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
-                <h2 class="text-2xl font-bold mb-4">Añadir Nueva Propiedad</h2>
-                <form id="addPropertyForm" class="flex-grow overflow-y-auto pr-4">
-                    <div class="border-b border-gray-200 mb-6">
-                        <nav id="add-property-tabs" class="-mb-px flex space-x-8" aria-label="Tabs">
-                            <button type="button" data-step="1" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600">Detalles del Piso</button>
-                            <button type="button" data-step="2" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">Plataformas y Finanzas</button>
-                            <button type="button" data-step="3" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">Servicios y Contactos</button>
-                        </nav>
-                    </div>
-
-                    <div id="form-step-1" class="form-step space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700">Foto de la Propiedad</label>
-                                <div class="mt-1 flex items-center">
-                                    <img id="photo-preview" src="https://placehold.co/128x128/e2e8f0/4a5568?text=Subir" class="h-32 w-32 object-cover rounded-md">
-                                    <input type="file" name="photo" id="photo-input" class="hidden" accept="image/*">
-                                    <button type="button" onclick="document.getElementById('photo-input').click()" class="ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50">
-                                        Cambiar
-                                    </button>
-                                </div>
-                            </div>
-                            <div><label class="block text-sm font-medium text-gray-700">Nombre/Alias</label><input type="text" name="nombre_alias" required class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Dirección Completa</label><input type="text" name="direccion_completa" required class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Tipo de Propiedad</label><select name="tipo_propiedad" required class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="">Selecciona un tipo...</option><option value="Piso">Piso</option><option value="Apartamento">Apartamento</option><option value="Casa">Casa</option><option value="Ático">Ático</option><option value="Duplex">Duplex</option></select></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Capacidad Máxima</label><input type="number" name="capacidad_maxima" required min="1" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Nº Habitaciones</label><input type="number" name="numero_habitaciones" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Nº Baños</label><input type="number" name="numero_banos" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Metros Cuadrados</label><input type="number" name="metros_cuadrados" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Cédula Habitabilidad</label><input type="text" name="cedula_habitabilidad" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Licencia Turística</label><input type="text" name="licencia_turistica" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-700">Descripción Corta</label><textarea name="descripcion_corta" rows="2" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea></div>
-                            <div class="md:col-span-2 relative"><label for="addAmenitiesInput" class="block text-sm font-medium text-gray-700">Amenidades</label><div class="flex flex-wrap items-center gap-2 p-2 mt-1 border border-gray-300 rounded-md editable-field"><div id="addAmenitiesTagContainer" class="flex flex-wrap gap-2"></div><input type="text" id="addAmenitiesInput" placeholder="Añadir y pulsar Enter..." class="flex-1 min-w-[150px] border-none outline-none bg-transparent p-1" list="amenities-datalist"></div><input type="hidden" name="amenidades" id="addAmenidadesHidden"></div>
-                        </div>
-                    </div>
-
-                    <div id="form-step-2" class="form-step space-y-4 hidden">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                           <div><label class="block text-sm font-medium text-gray-700">Código Airbnb</label><input type="text" name="codigo_airbnb" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">URL Airbnb</label><input type="url" name="url_airbnb" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">Código Booking.com</label><input type="text" name="codigo_booking" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">URL Booking.com</label><input type="url" name="url_booking" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">Precio Base por Noche (€)</label><input type="number" step="0.01" name="precio_base_noches" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">Coste Limpieza (€)</label><input type="number" step="0.01" name="coste_limpieza" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">IBI Anual (€)</label><input type="number" step="0.01" name="ibi_anual" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">Gastos Comunidad (€/mes)</label><input type="number" step="0.01" name="gastos_comunidad" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                           <div><label class="block text-sm font-medium text-gray-700">Hipoteca Mensual (€)</label><input type="number" step="0.01" name="hipoteca_mensual" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
-                        </div>
-                    </div>
-
-                    <div id="form-step-3" class="form-step space-y-4 hidden">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <h4 class="md:col-span-2 font-medium text-gray-800">Contacto Propietario</h4>
-                            <input type="text" name="contacto_propietario_nombre" placeholder="Nombre" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="tel" name="contacto_propietario_telefono" placeholder="Teléfono" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="email" name="contacto_propietario_email" placeholder="Email" class="editable-field md:col-span-2 block w-full rounded-md border-gray-300 shadow-sm">
-                            <h4 class="md:col-span-2 font-medium text-gray-800">Limpieza</h4>
-                            <input type="text" name="limpiador_nombre" placeholder="Nombre" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="tel" name="limpiador_telefono" placeholder="Teléfono" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
-                            <h4 class="md:col-span-2 font-medium text-gray-800">Fontanero</h4>
-                            <input type="text" name="fontanero_nombre" placeholder="Nombre" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="tel" name="fontanero_telefono" placeholder="Teléfono" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
-                            <h4 class="md:col-span-2 font-medium text-gray-800">Seguro Hogar</h4>
-                            <input type="text" name="seguro_hogar_aseguradora" placeholder="Aseguradora" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="text" name="seguro_hogar_poliza" placeholder="Nº Póliza" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="tel" name="seguro_hogar_telefono" placeholder="Teléfono" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
-                            <input type="email" name="seguro_hogar_email" placeholder="Email" class="editable-field block w-full rounded-md border-gray-300 shadow-sm">
-                            <div><label class="text-sm text-gray-500">Fecha Vencimiento</label><input type="date" name="seguro_hogar_fecha_venc" class="editable-field block w-full rounded-md border-gray-300 shadow-sm"></div>
-                            <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-700">Notas Adicionales</label><textarea name="notas_adicionales" rows="3" class="editable-field mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea></div>
-                        </div>
+            <div class="panel-content">
+                <form id="propertySearchForm" class="mb-4">
+                    <div class="tags-input-wrapper">
+                        <div id="tagsContainer" class="flex flex-wrap gap-2"></div>
+                        <input type="text" id="searchInput" placeholder="Añadir filtro y pulsar Enter...">
                     </div>
                 </form>
-                <div class="flex justify-end pt-4 space-x-4 border-t mt-4">
-                    <button type="button" onclick="hideAddPropertyModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancelar</button>
-                    <button type="submit" form="addPropertyForm" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">Guardar Propiedad</button>
+                <div style="overflow-y: auto; max-height: calc(100vh - 200px);">
+                    <table id="propertiesTable">
+                        <thead>
+                            <tr>
+                                <th>Foto</th>
+                                <th>Nombre/Alias</th>
+                                <th>Dirección</th>
+                                <th>Capacidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="propertiesTableBody">
+                            </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <section id="property-detail-panel" class="panel">
+            <div id="detail-placeholder" class="panel-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="color: #cbd5e1;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <h3 style="font-size: 1.2em; margin-top: 1em;">Bienvenido</h3>
+                <p>Selecciona una propiedad de la lista para ver sus detalles o añade una nueva.</p>
+            </div>
+            <div id="detail-form-wrapper" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+                </div>
+        </section>
     </div>
-    
-    <datalist id="amenities-datalist"></datalist>
+
+    <template id="property-form-template">
+        <form id="propertyForm" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+            <div class="panel-header">
+                <h2 id="form-title"></h2>
+            </div>
+
+            <div class="panel-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" id="deletePropertyBtn" class="btn btn-danger">Eliminar</button>
+                <div>
+                    <button type="button" id="cancelBtn" class="btn" style="margin-right: 8px;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </div>
+
+            <nav class="tabs-nav">
+                <button type="button" data-tab="1" class="tab-button active">Detalles</button>
+                <button type="button" data-tab="2" class="tab-button">Plataformas y Finanzas</button>
+                <button type="button" data-tab="3" class="tab-button">Servicios y Contactos</button>
+            </nav>
+
+            <div class="panel-content" style="flex-grow: 1; overflow-y: auto;">
+                <input type="hidden" name="id" value="">
+                <input type="hidden" id="existing-photo-url" value="">
+
+                <div id="tab-1" class="tab-content active space-y-4">
+                    <div class="form-grid">
+                        <div class="col-span-2">
+                            <label>Foto de la Propiedad</label>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <img id="photo-preview" src="https://placehold.co/128x128/e2e8f0/4a5568?text=Subir" style="height: 100px; width: 100px; object-cover: cover; border-radius: 12px;">
+                                <input type="file" name="photo" id="photo-input" class="hidden" accept="image/*">
+                                <div>
+                                    <button type="button" onclick="document.getElementById('photo-input').click()" class="btn">Cambiar</button>
+                                    <button type="button" id="delete-photo-btn" class="btn" style="margin-top: 8px;">Eliminar Foto</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div><label>Nombre/Alias</label><input type="text" name="nombre_alias" required class="editable-field"></div>
+                        <div><label>Dirección Completa</label><input type="text" name="direccion_completa" required class="editable-field"></div>
+                        <div><label>Tipo de Propiedad</label><select name="tipo_propiedad" required class="editable-field"><option value="">Selecciona...</option><option value="Piso">Piso</option><option value="Apartamento">Apartamento</option><option value="Casa">Casa</option><option value="Ático">Ático</option><option value="Duplex">Duplex</option></select></div>
+                        <div><label>Capacidad Máxima</label><input type="number" name="capacidad_maxima" required min="1" class="editable-field"></div>
+                        <div><label>Nº Habitaciones</label><input type="number" name="numero_habitaciones" class="editable-field"></div>
+                        <div><label>Nº Baños</label><input type="number" name="numero_banos" class="editable-field"></div>
+                        <div><label>Metros Cuadrados</label><input type="number" name="metros_cuadrados" class="editable-field"></div>
+                        <div><label>Cédula Habitabilidad</label><input type="text" name="cedula_habitabilidad" class="editable-field"></div>
+                        <div><label>Licencia Turística</label><input type="text" name="licencia_turistica" class="editable-field"></div>
+                        <div class="col-span-2"><label>Descripción Corta</label><textarea name="descripcion_corta" rows="2" class="editable-field"></textarea></div>
+                        <div class="col-span-2"><label>Amenidades</label><div class="tags-input-wrapper editable-field"><div id="amenitiesTagContainer" class="flex flex-wrap gap-2"></div><input type="text" id="amenitiesInput" placeholder="Añadir y pulsar Enter..."></div><input type="hidden" name="amenidades" id="amenidadesHidden"></div>
+                    </div>
+                </div>
+
+                <div id="tab-2" class="tab-content space-y-4">
+                    <div class="form-grid">
+                        <div><label>Código Airbnb</label><input type="text" name="codigo_airbnb" class="editable-field"></div>
+                        <div><label>URL Airbnb</label><input type="url" name="url_airbnb" class="editable-field"></div>
+                        <div><label>Código Booking.com</label><input type="text" name="codigo_booking" class="editable-field"></div>
+                        <div><label>URL Booking.com</label><input type="url" name="url_booking" class="editable-field"></div>
+                        <div><label>Precio Base por Noche (€)</label><input type="number" step="0.01" name="precio_base_noches" class="editable-field"></div>
+                        <div><label>Coste Limpieza (€)</label><input type="number" step="0.01" name="coste_limpieza" class="editable-field"></div>
+                        <div><label>IBI Anual (€)</label><input type="number" step="0.01" name="ibi_anual" class="editable-field"></div>
+                        <div><label>Gastos Comunidad (€/mes)</label><input type="number" step="0.01" name="gastos_comunidad" class="editable-field"></div>
+                        <div><label>Hipoteca Mensual (€)</label><input type="number" step="0.01" name="hipoteca_mensual" class="editable-field"></div>
+                    </div>
+                </div>
+
+                <div id="tab-3" class="tab-content space-y-4">
+                    <div class="form-grid">
+                        <h4 class="col-span-2 font-medium">Contacto Propietario</h4>
+                        <input type="text" name="contacto_propietario_nombre" placeholder="Nombre" class="editable-field">
+                        <input type="tel" name="contacto_propietario_telefono" placeholder="Teléfono" class="editable-field">
+                        <input type="email" name="contacto_propietario_email" placeholder="Email" class="col-span-2 editable-field">
+                        <h4 class="col-span-2 font-medium">Limpieza</h4>
+                        <input type="text" name="limpiador_nombre" placeholder="Nombre" class="editable-field">
+                        <input type="tel" name="limpiador_telefono" placeholder="Teléfono" class="editable-field">
+                        <h4 class="col-span-2 font-medium">Fontanero</h4>
+                        <input type="text" name="fontanero_nombre" placeholder="Nombre" class="editable-field">
+                        <input type="tel" name="fontanero_telefono" placeholder="Teléfono" class="editable-field">
+                        <h4 class="col-span-2 font-medium">Seguro Hogar</h4>
+                        <input type="text" name="seguro_hogar_aseguradora" placeholder="Aseguradora" class="editable-field">
+                        <input type="text" name="seguro_hogar_poliza" placeholder="Nº Póliza" class="editable-field">
+                        <input type="tel" name="seguro_hogar_telefono" placeholder="Teléfono" class="editable-field">
+                        <input type="email" name="seguro_hogar_email" placeholder="Email" class="editable-field">
+                        <div><label>Fecha Vencimiento</label><input type="date" name="seguro_hogar_fecha_venc" class="editable-field"></div>
+                        <div class="col-span-2"><label>Notas Adicionales</label><textarea name="notas_adicionales" rows="3" class="editable-field"></textarea></div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </template>
+
 
     <script>
-        let searchTags = [];
-        let addAmenityTags = [];
-        let allAmenitiesSet = new Set();
-        let currentStep = 1;
+        document.addEventListener('DOMContentLoaded', () => {
+            // ===== ESTADO DE LA APLICACIÓN =====
+            let allProperties = [];
+            let searchTags = [];
+            let amenityTags = [];
+            let selectedPropertyId = null;
+            let currentMode = 'view'; // 'view', 'edit', 'new'
 
-        const addForm = document.getElementById('addPropertyForm');
-        const steps = addForm.querySelectorAll('.form-step');
-        const tabButtons = document.querySelectorAll('#add-property-tabs .tab-button');
-        const photoInput = document.getElementById('photo-input');
-        const photoPreview = document.getElementById('photo-preview');
+            // ===== SELECTORES DE ELEMENTOS DEL DOM =====
+            const searchForm = document.getElementById('propertySearchForm');
+            const searchInput = document.getElementById('searchInput');
+            const tagsContainer = document.getElementById('tagsContainer');
+            const tableBody = document.getElementById('propertiesTableBody');
+            const addPropertyBtn = document.getElementById('addPropertyBtn');
+            const detailPlaceholder = document.getElementById('detail-placeholder');
+            const detailFormWrapper = document.getElementById('detail-form-wrapper');
+            const formTemplate = document.getElementById('property-form-template');
 
-        function showStep(stepNumber) {
-            steps.forEach(step => step.classList.add('hidden'));
-            document.getElementById(`form-step-${stepNumber}`).classList.remove('hidden');
-            tabButtons.forEach(button => {
-                button.classList.remove('border-indigo-500', 'text-indigo-600');
-                button.classList.add('border-transparent', 'text-gray-500');
-            });
-            const activeButton = document.querySelector(`#add-property-tabs .tab-button[data-step="${stepNumber}"]`);
-            if (activeButton) {
-                activeButton.classList.add('border-indigo-500', 'text-indigo-600');
-                activeButton.classList.remove('border-transparent', 'text-gray-500');
-            }
-            currentStep = stepNumber;
-        }
+            // ===== FUNCIONES DE RENDERIZADO =====
 
-        tabButtons.forEach(button => button.addEventListener('click', () => showStep(parseInt(button.dataset.step))));
-
-        function showAddPropertyModal() {
-            addForm.reset();
-            photoPreview.src = 'https://placehold.co/128x128/e2e8f0/4a5568?text=Subir';
-            addAmenityTags = [];
-            renderAddAmenityTags();
-            showStep(1);
-            highlightEmptyFields(addForm);
-            document.getElementById('addPropertyModal').classList.remove('hidden');
-        }
-
-        function hideAddPropertyModal() { document.getElementById('addPropertyModal').classList.add('hidden'); }
-        function showPropertyDetails(id) { window.location.href = `/property/${id}`; }
-
-        function renderTags(tags, containerId, hiddenInputId, onUpdateCallback) {
-            const container = document.getElementById(containerId);
-            const hiddenInput = document.getElementById(hiddenInputId);
-            container.innerHTML = '';
-            tags.forEach((tag, index) => {
-                const tagElement = document.createElement('span');
-                tagElement.className = 'inline-flex items-center px-2 py-1 bg-gray-200 text-gray-800 text-sm font-medium rounded';
-                const textNode = document.createTextNode(tag);
-                const removeButton = document.createElement('button');
-                removeButton.type = 'button';
-                removeButton.className = 'ml-2 text-gray-500 hover:text-gray-700';
-                removeButton.innerHTML = '&times;';
-                removeButton.addEventListener('click', () => {
-                    tags.splice(index, 1);
-                    onUpdateCallback();
-                });
-                tagElement.appendChild(textNode);
-                tagElement.appendChild(removeButton);
-                container.appendChild(tagElement);
-            });
-            if (hiddenInput) {
-                hiddenInput.value = tags.join(',');
-            }
-        }
-
-        function renderSearchTags() { renderTags(searchTags, 'tagsContainer', null, () => { renderSearchTags(); loadProperties(); }); }
-        function renderAddAmenityTags() { renderTags(addAmenityTags, 'addAmenitiesTagContainer', 'addAmenidadesHidden', () => { renderAddAmenityTags(); highlightEmptyFields(addForm); }); updateAmenityDatalist(); }
-        
-        function updateAmenityDatalist() {
-            const datalist = document.getElementById('amenities-datalist');
-            datalist.innerHTML = '';
-            allAmenitiesSet.forEach(amenity => {
-                if (!addAmenityTags.includes(amenity)) {
-                    const option = document.createElement('option');
-                    option.value = amenity;
-                    datalist.appendChild(option);
-                }
-            });
-        }
-
-        function highlightEmptyFields(form) {
-            const inputs = form.querySelectorAll('input[type="text"], input[type="number"], input[type="url"], input[type="tel"], input[type="email"], input[type="date"], textarea, select');
-            inputs.forEach(input => {
-                if (input.classList.contains('border-red-500')) return;
-                if (!input.value || input.value.trim() === '') {
-                    input.classList.add('empty-field-highlight');
-                } else {
-                    input.classList.remove('empty-field-highlight');
-                }
-            });
-            const amenitiesContainer = form.querySelector('#addAmenitiesTagContainer, #amenitiesTagContainer')?.parentElement;
-            if (amenitiesContainer) {
-                const tags = form.id === 'addPropertyForm' ? addAmenityTags : amenityTags;
-                if (tags.length === 0) {
-                    amenitiesContainer.classList.add('empty-field-highlight');
-                } else {
-                    amenitiesContainer.classList.remove('empty-field-highlight');
-                }
-            }
-        }
-
-        async function loadProperties() {
-            const params = new URLSearchParams();
-            searchTags.forEach(tag => params.append('q', tag));
-            try {
-                const response = await fetch(`/api/search?${params.toString()}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const properties = await response.json();
-                const tableBody = document.getElementById('propertiesTableBody');
+            /**
+             * Renderiza la tabla de propiedades en el panel izquierdo.
+             */
+            const renderPropertiesTable = () => {
                 tableBody.innerHTML = '';
-                if (!properties || properties.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No se encontraron propiedades.</td></tr>';
+                const filteredProperties = allProperties.filter(p => {
+                    if (searchTags.length === 0) return true;
+                    const propertyText = [p.nombre_alias, p.direccion_completa, p.tipo_propiedad].join(' ').toLowerCase();
+                    return searchTags.every(tag => propertyText.includes(tag.toLowerCase()));
+                });
+
+                if (filteredProperties.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2em;">No se encontraron propiedades.</td></tr>';
                     return;
                 }
-                properties.forEach(p => {
+
+                filteredProperties.forEach(p => {
                     const row = tableBody.insertRow();
-                    row.className = 'cursor-pointer hover:bg-gray-50';
-                    row.onclick = () => showPropertyDetails(p.id);
+                    row.dataset.id = p.id;
+                    if (p.id === selectedPropertyId) {
+                        row.classList.add('selected-row');
+                    }
+                    row.onclick = () => handleSelectProperty(p.id);
+
                     const photoUrl = p.foto_url && p.foto_url.Valid ? p.foto_url.String : 'https://placehold.co/100x60/e2e8f0/4a5568?text=Sin+Foto';
-                    row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap"><img src="${photoUrl}" alt="Foto de ${p.nombre_alias}" class="h-10 w-16 object-cover rounded"></td><td class="px-6 py-4 whitespace-nowrap">${p.nombre_alias}</td><td class="px-6 py-4 whitespace-nowrap">${p.direccion_completa}</td><td class="px-6 py-4 whitespace-nowrap">${p.tipo_propiedad}</td><td class="px-6 py-4 whitespace-nowrap">${p.capacidad_maxima}</td>`;
+                    row.innerHTML = `
+                        <td><img src="${photoUrl}" alt="Foto de ${p.nombre_alias}"></td>
+                        <td>${p.nombre_alias}</td>
+                        <td>${p.direccion_completa}</td>
+                        <td>${p.capacidad_maxima}</td>
+                    `;
                 });
-            } catch (error) {
-                console.error('Error al cargar propiedades:', error);
-                document.getElementById('propertiesTableBody').innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Error al cargar las propiedades.</td></tr>';
-            }
-        }
+            };
 
-        document.getElementById('propertySearchForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const input = document.getElementById('searchInput');
-            const newTag = input.value.trim();
-            if (newTag && !searchTags.includes(newTag)) {
-                searchTags.push(newTag);
-                renderSearchTags();
-                loadProperties();
-            }
-            input.value = '';
-        });
+            /**
+             * Renderiza el panel de detalles con un formulario (nuevo o para editar).
+             * @param {object|null} property - El objeto de la propiedad a editar, o null para un formulario nuevo.
+             */
+            const renderDetailPanel = (property) => {
+                detailPlaceholder.classList.add('hidden');
+                detailFormWrapper.innerHTML = '';
+                detailFormWrapper.classList.remove('hidden');
 
-        document.getElementById('addAmenitiesInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const newTag = this.value.trim();
-                if (newTag && !addAmenityTags.includes(newTag)) {
-                    addAmenityTags.push(newTag);
-                    renderAddAmenityTags();
+                const formClone = formTemplate.content.cloneNode(true);
+                detailFormWrapper.appendChild(formClone);
+                
+                const form = detailFormWrapper.querySelector('#propertyForm');
+
+                if (property) {
+                    // Modo Edición
+                    currentMode = 'edit';
+                    form.querySelector('#form-title').textContent = `Editando: ${property.nombre_alias}`;
+                    
+                    // Rellenar campos
+                    form.querySelector('[name="id"]').value = property.id;
+                    form.querySelector('#existing-photo-url').value = property.foto_url.Valid ? property.foto_url.String : '';
+                    form.querySelector('#photo-preview').src = property.foto_url.Valid ? property.foto_url.String : 'https://placehold.co/128x128/e2e8f0/4a5568?text=Subir';
+                    form.querySelector('[name="nombre_alias"]').value = property.nombre_alias;
+                    form.querySelector('[name="direccion_completa"]').value = property.direccion_completa;
+                    form.querySelector('[name="tipo_propiedad"]').value = property.tipo_propiedad;
+                    form.querySelector('[name="capacidad_maxima"]').value = property.capacidad_maxima;
+                    
+                    const amenitiesString = property.amenidades.Valid ? property.amenidades.String : "";
+                    amenityTags = amenitiesString ? amenitiesString.split(',').map(t => t.trim()).filter(t => t) : [];
+
+                    // Rellenar el resto de los campos (incluyendo los nulos)
+                    populateNullableField(form, 'numero_habitaciones', property.numero_habitaciones);
+                    populateNullableField(form, 'numero_banos', property.numero_banos);
+                    populateNullableField(form, 'metros_cuadrados', property.metros_cuadrados);
+                    populateNullableField(form, 'cedula_habitabilidad', property.cedula_habitabilidad);
+                    populateNullableField(form, 'licencia_turistica', property.licencia_turistica);
+                    populateNullableField(form, 'descripcion_corta', property.descripcion_corta);
+                    populateNullableField(form, 'codigo_airbnb', property.codigo_airbnb);
+                    populateNullableField(form, 'url_airbnb', property.url_airbnb);
+                    populateNullableField(form, 'codigo_booking', property.codigo_booking);
+                    populateNullableField(form, 'url_booking', property.url_booking);
+                    populateNullableField(form, 'precio_base_noches', property.precio_base_noches);
+                    populateNullableField(form, 'coste_limpieza', property.coste_limpieza);
+                    populateNullableField(form, 'ibi_anual', property.ibi_anual);
+                    populateNullableField(form, 'gastos_comunidad', property.gastos_comunidad);
+                    populateNullableField(form, 'hipoteca_mensual', property.hipoteca_mensual);
+                    populateNullableField(form, 'contacto_propietario_nombre', property.contacto_propietario_nombre);
+                    populateNullableField(form, 'contacto_propietario_telefono', property.contacto_propietario_telefono);
+                    populateNullableField(form, 'contacto_propietario_email', property.contacto_propietario_email);
+                    populateNullableField(form, 'limpiador_nombre', property.limpiador_nombre);
+                    populateNullableField(form, 'limpiador_telefono', property.limpiador_telefono);
+                    populateNullableField(form, 'fontanero_nombre', property.fontanero_nombre);
+                    populateNullableField(form, 'fontanero_telefono', property.fontanero_telefono);
+                    populateNullableField(form, 'seguro_hogar_aseguradora', property.seguro_hogar_aseguradora);
+                    populateNullableField(form, 'seguro_hogar_poliza', property.seguro_hogar_poliza);
+                    const fechaVenc = property.seguro_hogar_fecha_venc;
+                    if (fechaVenc && fechaVenc.Valid && fechaVenc.Time) {
+                         form.querySelector('[name="seguro_hogar_fecha_venc"]').value = fechaVenc.Time.substring(0,10);
+                    }
+                    populateNullableField(form, 'seguro_hogar_telefono', property.seguro_hogar_telefono);
+                    populateNullableField(form, 'seguro_hogar_email', property.seguro_hogar_email);
+                    populateNullableField(form, 'notas_adicionales', property.notas_adicionales);
+
+                } else {
+                    // Modo Creación
+                    currentMode = 'new';
+                    form.querySelector('#form-title').textContent = 'Añadir Nueva Propiedad';
+                    amenityTags = [];
+                    form.querySelector('#deletePropertyBtn').classList.add('hidden');
                 }
-                this.value = '';
+                
+                attachFormEventListeners(form);
+                renderAmenityTags();
+                showTab(1); // Siempre empezar en la primera tab
+            };
+            
+            const populateNullableField = (form, name, data) => {
+                const input = form.querySelector(`[name="${name}"]`);
+                if (data && data.Valid) {
+                    input.value = data.String ?? data.Int64 ?? data.Float64 ?? '';
+                } else {
+                    input.value = '';
+                }
+            };
+            
+            const hideDetailPanel = () => {
+                detailPlaceholder.classList.remove('hidden');
+                detailFormWrapper.classList.add('hidden');
+                detailFormWrapper.innerHTML = '';
+                selectedPropertyId = null;
+                currentMode = 'view';
+                renderPropertiesTable(); // Para deseleccionar la fila
             }
-        });
 
-        document.getElementById('searchInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                this.value = '';
-                searchTags = [];
-                renderSearchTags();
-                loadProperties();
-            }
-        });
-        
-        photoInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
-                photoPreview.src = URL.createObjectURL(file);
-            }
-        });
+            /**
+             * Muestra una tab específica en el formulario de detalles.
+             * @param {number} tabNumber - El número de la tab a mostrar.
+             */
+            const showTab = (tabNumber) => {
+                detailFormWrapper.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                detailFormWrapper.querySelector(`#tab-${tabNumber}`).classList.add('active');
+                detailFormWrapper.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+                detailFormWrapper.querySelector(`.tab-button[data-tab="${tabNumber}"]`).classList.add('active');
+            };
 
-        const createNullable = (value, type) => {
-            const isValid = value !== null && value.trim() !== '';
-            let parsedValue;
-            switch(type) {
-                case 'Int64': parsedValue = isValid ? parseInt(value, 10) : 0; break;
-                case 'Float64': parsedValue = isValid ? parseFloat(value) : 0.0; break;
-                case 'Time': parsedValue = isValid ? value : null; break;
-                default: parsedValue = value;
-            }
-            return { [type]: parsedValue, Valid: isValid };
-        };
-        const createNullableString = (value) => ({ String: value, Valid: value != null && value.trim() !== '' });
+            const renderTags = (tags, containerElem, hiddenInputElem, onUpdateCallback) => {
+                containerElem.innerHTML = '';
+                tags.forEach((tag, index) => {
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'tag';
+                    tagElement.textContent = tag;
+                    const removeButton = document.createElement('button');
+                    removeButton.type = 'button';
+                    removeButton.innerHTML = '&times;';
+                    removeButton.onclick = () => {
+                        tags.splice(index, 1);
+                        onUpdateCallback();
+                    };
+                    tagElement.appendChild(removeButton);
+                    containerElem.appendChild(tagElement);
+                });
+                if (hiddenInputElem) {
+                    hiddenInputElem.value = tags.join(',');
+                }
+            };
 
-        function validateAndFocus(form) {
-            const requiredInputs = form.querySelectorAll('[required]');
-            for (const input of requiredInputs) {
-                if (!input.value.trim()) {
-                    const stepPane = input.closest('.form-step');
-                    if (stepPane) {
-                        const stepNumber = parseInt(stepPane.id.split('-')[2]);
-                        showStep(stepNumber);
-                        input.focus();
-                        input.classList.add('border-red-500', 'ring-red-500', 'ring-1');
-                        setTimeout(() => input.classList.remove('border-red-500', 'ring-red-500', 'ring-1'), 3000);
-                        alert(`El campo "${input.previousElementSibling.textContent}" es obligatorio.`);
-                        return false;
+            const renderSearchTags = () => renderTags(searchTags, tagsContainer, null, () => { renderSearchTags(); renderPropertiesTable(); });
+            const renderAmenityTags = () => {
+                const amenitiesContainer = detailFormWrapper.querySelector('#amenitiesTagContainer');
+                const amenitiesHiddenInput = detailFormWrapper.querySelector('#amenidadesHidden');
+                if (amenitiesContainer) {
+                    renderTags(amenityTags, amenitiesContainer, amenitiesHiddenInput, renderAmenityTags);
+                }
+            };
+
+
+            // ===== MANEJADORES DE EVENTOS =====
+
+            const handleSelectProperty = (id) => {
+                if (selectedPropertyId === id) return; // Ya está seleccionada
+                selectedPropertyId = id;
+                const property = allProperties.find(p => p.id === id);
+                if (property) {
+                    renderDetailPanel(property);
+                    renderPropertiesTable(); // Para resaltar la nueva fila
+                }
+            };
+
+            const attachFormEventListeners = (form) => {
+                // Navegación por tabs
+                form.querySelectorAll('.tab-button').forEach(button => {
+                    button.onclick = () => showTab(parseInt(button.dataset.tab));
+                });
+                
+                // Input de amenidades
+                const amenitiesInput = form.querySelector('#amenitiesInput');
+                amenitiesInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const newTag = amenitiesInput.value.trim();
+                        if (newTag && !amenityTags.includes(newTag)) {
+                            amenityTags.push(newTag);
+                            renderAmenityTags();
+                        }
+                        amenitiesInput.value = '';
+                    }
+                });
+                
+                // Subida de foto
+                const photoInput = form.querySelector('#photo-input');
+                const photoPreview = form.querySelector('#photo-preview');
+                photoInput.addEventListener('change', () => {
+                    const file = photoInput.files[0];
+                    if (file) {
+                        photoPreview.src = URL.createObjectURL(file);
+                    }
+                });
+                
+                form.querySelector('#delete-photo-btn').onclick = () => {
+                    photoPreview.src = 'https://placehold.co/128x128/e2e8f0/4a5568?text=Sin+Foto';
+                    photoInput.value = '';
+                    form.querySelector('#existing-photo-url').value = '';
+                };
+                
+                // Botones de acción
+                form.querySelector('#cancelBtn').onclick = hideDetailPanel;
+                const deleteBtn = form.querySelector('#deletePropertyBtn');
+                if(deleteBtn) deleteBtn.onclick = () => handleDeleteProperty(selectedPropertyId);
+
+                form.addEventListener('submit', handleFormSubmit);
+            };
+
+            searchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newTag = searchInput.value.trim();
+                if (newTag && !searchTags.includes(newTag)) {
+                    searchTags.push(newTag);
+                    renderSearchTags();
+                    renderPropertiesTable();
+                }
+                searchInput.value = '';
+            });
+            
+            addPropertyBtn.addEventListener('click', () => {
+                selectedPropertyId = null;
+                renderPropertiesTable(); // Des-selecciona visualmente
+                renderDetailPanel(null);
+            });
+
+
+            // ===== LÓGICA DE API Y FORMULARIO =====
+
+            const loadProperties = async () => {
+                try {
+                    const response = await fetch('/api/search'); // Asume que /api/search sin params devuelve todo
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    allProperties = await response.json() || [];
+                    renderPropertiesTable();
+                } catch (error) {
+                    console.error('Error al cargar propiedades:', error);
+                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">Error al cargar las propiedades.</td></tr>';
+                }
+            };
+
+            const createNullable = (value, type) => {
+                const isValid = value !== null && value.trim() !== '';
+                let parsedValue;
+                switch(type) {
+                    case 'Int64': parsedValue = isValid ? parseInt(value, 10) : 0; break;
+                    case 'Float64': parsedValue = isValid ? parseFloat(value) : 0.0; break;
+                    case 'Time': parsedValue = isValid ? value : null; break;
+                    default: parsedValue = value;
+                }
+                return { [type]: parsedValue, Valid: isValid };
+            };
+            const createNullableString = (value) => ({ String: value, Valid: value != null && value.trim() !== '' });
+
+            const handleFormSubmit = async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const formData = new FormData(form);
+                const id = formData.get('id');
+
+                // Lógica de subida de foto
+                let photoUrl = form.querySelector('#existing-photo-url').value;
+                const photoFile = form.querySelector('#photo-input').files[0];
+                if (photoFile) {
+                    const photoFormData = new FormData();
+                    photoFormData.append('photo', photoFile);
+                    try {
+                        const uploadResponse = await fetch('/api/upload', { method: 'POST', body: photoFormData });
+                        if (!uploadResponse.ok) throw new Error('Error al subir la foto.');
+                        photoUrl = (await uploadResponse.json()).url;
+                    } catch (error) {
+                        alert(error.message); return;
                     }
                 }
-            }
-            return true;
-        }
+                
+                // Construir el objeto property
+                const property = {
+                    foto_url: createNullableString(photoUrl),
+                    nombre_alias: formData.get('nombre_alias'),
+                    direccion_completa: formData.get('direccion_completa'),
+                    tipo_propiedad: formData.get('tipo_propiedad'),
+                    capacidad_maxima: parseInt(formData.get('capacidad_maxima'), 10) || 0,
+                    amenidades: createNullableString(formData.get('amenidades')),
+                    // ... mapear todos los demás campos nulos
+                    numero_habitaciones: createNullable(formData.get('numero_habitaciones'), 'Int64'),
+                    numero_banos: createNullable(formData.get('numero_banos'), 'Int64'),
+                    metros_cuadrados: createNullable(formData.get('metros_cuadrados'), 'Int64'),
+                    cedula_habitabilidad: createNullableString(formData.get('cedula_habitabilidad')),
+                    licencia_turistica: createNullableString(formData.get('licencia_turistica')),
+                    descripcion_corta: createNullableString(formData.get('descripcion_corta')),
+                    codigo_airbnb: createNullableString(formData.get('codigo_airbnb')),
+                    url_airbnb: createNullableString(formData.get('url_airbnb')),
+                    codigo_booking: createNullableString(formData.get('codigo_booking')),
+                    url_booking: createNullableString(formData.get('url_booking')),
+                    precio_base_noches: createNullable(formData.get('precio_base_noches'), 'Float64'),
+                    coste_limpieza: createNullable(formData.get('coste_limpieza'), 'Float64'),
+                    ibi_anual: createNullable(formData.get('ibi_anual'), 'Float64'),
+                    gastos_comunidad: createNullable(formData.get('gastos_comunidad'), 'Float64'),
+                    hipoteca_mensual: createNullable(formData.get('hipoteca_mensual'), 'Float64'),
+                    contacto_propietario_nombre: createNullableString(formData.get('contacto_propietario_nombre')),
+                    contacto_propietario_telefono: createNullableString(formData.get('contacto_propietario_telefono')),
+                    contacto_propietario_email: createNullableString(formData.get('contacto_propietario_email')),
+                    limpiador_nombre: createNullableString(formData.get('limpiador_nombre')),
+                    limpiador_telefono: createNullableString(formData.get('limpiador_telefono')),
+                    fontanero_nombre: createNullableString(formData.get('fontanero_nombre')),
+                    fontanero_telefono: createNullableString(formData.get('fontanero_telefono')),
+                    seguro_hogar_aseguradora: createNullableString(formData.get('seguro_hogar_aseguradora')),
+                    seguro_hogar_poliza: createNullableString(formData.get('seguro_hogar_poliza')),
+                    seguro_hogar_fecha_venc: createNullable(formData.get('seguro_hogar_fecha_venc'), 'Time'),
+                    seguro_hogar_telefono: createNullableString(formData.get('seguro_hogar_telefono')),
+                    seguro_hogar_email: createNullableString(formData.get('seguro_hogar_email')),
+                    notas_adicionales: createNullableString(formData.get('notas_adicionales')),
+                };
 
-        addForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            if (!validateAndFocus(this)) return;
+                const method = id ? 'PUT' : 'POST';
+                const url = id ? `/api/properties/${id}` : '/api/properties';
 
-            const formData = new FormData(this);
-            let photoUrl = '';
-
-            const photoFile = photoInput.files[0];
-            if (photoFile) {
-                const photoFormData = new FormData();
-                photoFormData.append('photo', photoFile);
                 try {
-                    const uploadResponse = await fetch('/api/upload', {
-                        method: 'POST',
-                        body: photoFormData,
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(property)
                     });
-                    if (!uploadResponse.ok) throw new Error('Error al subir la foto.');
-                    const uploadResult = await uploadResponse.json();
-                    photoUrl = uploadResult.url;
+                    if (response.ok) {
+                        alert(`Propiedad ${id ? 'actualizada' : 'creada'} exitosamente!`);
+                        hideDetailPanel();
+                        loadProperties(); // Recargar la lista
+                    } else {
+                        const result = await response.json();
+                        alert(`Error: ${result.details || result.error}`);
+                    }
                 } catch (error) {
-                    alert(error.message);
-                    return;
+                    console.error('Error:', error);
+                    alert('Error de comunicación con el servidor.');
                 }
-            }
-
-            const property = {
-                foto_url: createNullableString(photoUrl),
-                nombre_alias: formData.get('nombre_alias'),
-                direccion_completa: formData.get('direccion_completa'),
-                tipo_propiedad: formData.get('tipo_propiedad'),
-                capacidad_maxima: parseInt(formData.get('capacidad_maxima'), 10) || 0,
-                numero_habitaciones: createNullable(formData.get('numero_habitaciones'), 'Int64'),
-                numero_banos: createNullable(formData.get('numero_banos'), 'Int64'),
-                metros_cuadrados: createNullable(formData.get('metros_cuadrados'), 'Int64'),
-                cedula_habitabilidad: createNullableString(formData.get('cedula_habitabilidad')),
-                licencia_turistica: createNullableString(formData.get('licencia_turistica')),
-                descripcion_corta: createNullableString(formData.get('descripcion_corta')),
-                amenidades: createNullableString(formData.get('amenidades')),
-                codigo_airbnb: createNullableString(formData.get('codigo_airbnb')),
-                url_airbnb: createNullableString(formData.get('url_airbnb')),
-                codigo_booking: createNullableString(formData.get('codigo_booking')),
-                url_booking: createNullableString(formData.get('url_booking')),
-                precio_base_noches: createNullable(formData.get('precio_base_noches'), 'Float64'),
-                coste_limpieza: createNullable(formData.get('coste_limpieza'), 'Float64'),
-                ibi_anual: createNullable(formData.get('ibi_anual'), 'Float64'),
-                gastos_comunidad: createNullable(formData.get('gastos_comunidad'), 'Float64'),
-                hipoteca_mensual: createNullable(formData.get('hipoteca_mensual'), 'Float64'),
-                contacto_propietario_nombre: createNullableString(formData.get('contacto_propietario_nombre')),
-                contacto_propietario_telefono: createNullableString(formData.get('contacto_propietario_telefono')),
-                contacto_propietario_email: createNullableString(formData.get('contacto_propietario_email')),
-                limpiador_nombre: createNullableString(formData.get('limpiador_nombre')),
-                limpiador_telefono: createNullableString(formData.get('limpiador_telefono')),
-                fontanero_nombre: createNullableString(formData.get('fontanero_nombre')),
-                fontanero_telefono: createNullableString(formData.get('fontanero_telefono')),
-                seguro_hogar_aseguradora: createNullableString(formData.get('seguro_hogar_aseguradora')),
-                seguro_hogar_poliza: createNullableString(formData.get('seguro_hogar_poliza')),
-                seguro_hogar_fecha_venc: createNullable(formData.get('seguro_hogar_fecha_venc'), 'Time'),
-                seguro_hogar_telefono: createNullableString(formData.get('seguro_hogar_telefono')),
-                seguro_hogar_email: createNullableString(formData.get('seguro_hogar_email')),
-                notas_adicionales: createNullableString(formData.get('notas_adicionales')),
             };
-            try {
-                const response = await fetch('/api/properties', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(property)
-                });
-                if (response.ok) {
-                    alert('Propiedad agregada exitosamente');
-                    hideAddPropertyModal();
-                    location.reload(); 
-                } else {
-                    const result = await response.json();
-                    alert('Error al crear la propiedad: ' + (result.details || result.error));
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al comunicarse con el servidor');
-            }
-        });
-        
-        document.getElementById('addPropertyModal').addEventListener('click', function(e) {
-            if (e.target === e.currentTarget) { hideAddPropertyModal(); }
-        });
-
-        async function fetchAllAmenities() {
-            try {
-                const response = await fetch('/api/search');
-                if (!response.ok) return;
-                const properties = await response.json();
-                allAmenitiesSet = new Set();
-                if (properties) {
-                    properties.forEach(p => {
-                        if (p.amenidades && p.amenidades.Valid) {
-                            p.amenidades.String.split(',').forEach(amenity => {
-                                const trimmed = amenity.trim();
-                                if(trimmed) allAmenitiesSet.add(trimmed);
-                            });
+            
+            const handleDeleteProperty = async (id) => {
+                if (!id) return;
+                if (confirm('¿Está seguro que desea eliminar esta propiedad?')) {
+                    try {
+                        const response = await fetch(`/api/properties/${id}`, { method: 'DELETE' });
+                        if (response.ok) {
+                            alert('Propiedad eliminada.');
+                            hideDetailPanel();
+                            loadProperties();
+                        } else {
+                            const result = await response.json();
+                            alert(`Error al eliminar: ${result.details || result.error}`);
                         }
-                    });
+                    } catch (error) {
+                        alert('Error de conexión.');
+                    }
                 }
-                updateAmenityDatalist();
-            } catch (error) {
-                console.error("Could not fetch amenities for suggestions:", error);
-            }
-        }
+            };
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchAllAmenities();
-            addForm.addEventListener('input', () => highlightEmptyFields(addForm));
+
+            // ===== INICIALIZACIÓN =====
+            loadProperties();
+
         });
     </script>
 </body>

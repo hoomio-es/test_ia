@@ -1,0 +1,13 @@
+/* Estilo para resaltar campos editables */
+.editable-field {
+    transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+.editable-field:focus {
+    --tw-ring-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 0 3px var(--tw-ring-color);
+}
+/* Estilo para resaltar campos vacíos */
+.empty-field-highlight {
+    border-width: 2px !important;
+    border-color: #6b7280 !important; /* gray-500 */
+}
