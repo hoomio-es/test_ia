@@ -52,6 +52,9 @@
                     <button type="button" onclick="showTab(3)" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         Servicios y Contactos
                     </button>
+                    <button type="button" onclick="showTab(4)" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Issues
+                    </button>
                 </nav>
             </div>
 
@@ -134,6 +137,15 @@
                     </div>
                 </div>
             </div>
+            <div  id="tab-4" class="tab-content space-y-4 hidden">
+    {{template "issues" .}}
+</div>
+<script>
+function showTab(tab) {
+  document.getElementById('tab-details').style.display = tab === 'details' ? '' : 'none';
+  document.getElementById('tab-issues').style.display = tab === 'issues' ? '' : 'none';
+}
+</script>
 
             <div class="mt-8 flex justify-between items-center">
                 <button type="button" onclick="deleteProperty('{{.Property.ID}}')" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">Eliminar</button>

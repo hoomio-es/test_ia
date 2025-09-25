@@ -83,6 +83,8 @@ func main() {
 	propertyService := models.NewPropertyService(db)
 	// CORRECTED: Remove the 'engine' argument from the call
 	propertyController := controllers.NewPropertyController(propertyService)
+	issueService := models.NewIssueService(db)
+	issueController := controllers.NewIssueController(issueService)
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -98,6 +100,7 @@ func main() {
 	// Routes
 	app.Get("/", propertyController.ListProperties)
 	app.Get("/property/:id", propertyController.ShowProperty)
+	app.Get("/property/:id/issues", issueController.ListIssues)
 
 	// API Routes
 	api := app.Group("/api")
@@ -107,6 +110,7 @@ func main() {
 	api.Get("/properties/:id", propertyController.GetProperty)
 	api.Get("/search", propertyController.SearchProperties)
 	api.Post("/upload", propertyController.UploadPhoto) // Añade esta nueva ruta
+	api.Post("/property/:id/issues", issueController.CreateIssue)
 
 	// Start server
 	log.Fatal(app.Listen(":8080"))

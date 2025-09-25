@@ -1,0 +1,32 @@
+{{define "issues"}}
+<div class="panel">
+  <h2>Issues</h2>
+  <form method="POST" action="/property/{{.Property.ID}}/issues">
+    <label for="description">Description:</label>
+    <textarea name="description" required></textarea>
+    <label for="status">Status:</label>
+    <select name="status">
+      <option value="TODO">TODO</option>
+      <option value="DOING">DOING</option>
+      <option value="DONE">DONE</option>
+    </select>
+    <label for="updates">Updates:</label>
+    <textarea name="updates"></textarea>
+    <button type="submit">Create Issue</button>
+  </form>
+  <hr>
+  <ul>
+    {{range .Issues}}
+      <li>
+        <b>ID:</b> {{.ID}}<br>
+        <b>Description:</b> {{.Description}}<br>
+        <b>Status:</b> {{.Status}}<br>
+        <b>Updates:</b> {{.Updates}}<br>
+        <b>Created:</b> {{.CreatedAt}}
+      </li>
+    {{else}}
+      <li>No issues yet.</li>
+    {{end}}
+  </ul>
+</div>
+{{end}}
